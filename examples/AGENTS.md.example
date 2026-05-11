@@ -1,0 +1,123 @@
+# AGENTS.md — example for a project adopting agent-squad
+
+This file shows how a real project composes roles from agent-squad's three
+personas plus domain skills plus file lanes. The example below is the
+`dicom-store-v2` project mapped onto the construct.
+
+Replace this content with your own role mapping when you adopt agent-squad.
+
+---
+
+## Role mapping
+
+```yaml
+construct_version: ">=0.1.0"
+
+roles:
+
+  # Lead — orchestration, briefing, PR review
+  - name: lead
+    alias: Pradhan
+    persona: lead
+    skills: []
+    lanes:
+      write: [docs/adr/, AGENTS.md, .ai-dlc.yml, ProjectPlan.md]
+      read:  []   # default = everything
+
+  # Architects — design before implementation, refine until Lead signs off
+
+  - name: cloud-architect
+    alias: Sanyojak (architect mode)
+    persona: architect
+    skills: [aws]
+    lanes:
+      write: [docs/architecture/cloud/, docs/adr/, docs/contracts/cloud-*.{md,yaml}]
+      read:  [docs/contracts/, infra/]
+
+  - name: db-architect
+    alias: Dharak (architect mode)
+    persona: architect
+    skills: [postgres]
+    lanes:
+      write: [docs/architecture/db/, docs/adr/, docs/contracts/db-*.{md,sql}]
+      read:  [app/models/, alembic/, docs/contracts/]
+
+  # Implementers — work in parallel after contract is locked
+
+  - name: backend-dev
+    alias: Mula-lekhaka
+    persona: implementer
+    skills: [python, fastapi, postgres]
+    lanes:
+      write: [app/api/, app/services/, app/tasks/, app/schemas/, tests/]
+      read:  [docs/contracts/, docs/architecture/]
+
+  - name: frontend-dev
+    alias: Drshya-shilpi
+    persona: implementer
+    skills: [react, ohif]
+    lanes:
+      write: [frontend/, public/]
+      read:  [docs/contracts/, docs/architecture/]
+
+  - name: db-engineer
+    alias: Dharak (build mode)
+    persona: implementer
+    skills: [postgres, alembic]
+    lanes:
+      write: [app/models/, alembic/, alembic.ini]
+      read:  [docs/contracts/, docs/architecture/db/]
+
+  - name: devops-engineer
+    alias: Sanyojak (build mode)
+    persona: implementer
+    skills: [docker, aws-cdk, github-actions]
+    lanes:
+      write: [Dockerfile*, docker-compose*, cdk/, .github/workflows/, .env.example]
+      read:  [docs/architecture/cloud/, docs/contracts/]
+
+contract_first:
+  required_for:
+    - feature_kind: api
+      contract_path: docs/contracts/api-*.ts
+    - feature_kind: schema
+      contract_path: docs/contracts/db-*.{md,sql}
+    - feature_kind: event
+      contract_path: docs/contracts/event-*.yaml
+    - feature_kind: iac
+      contract_path: docs/contracts/cloud-*.yaml
+```
+
+---
+
+## Project-specific overrides
+
+Beyond the role mapping, a project may add rules that layer on top of the
+construct. These are **project-owned** — agent-squad doesn't know about them,
+but `finish-feature` honours them via `pre-pr` hook handlers declared by
+project-specific skills.
+
+### Multi-tenancy review
+
+Every backend-dev PR must include a "multi-tenant query check" line in the
+self-review section. The check verifies every new query filters by `tenant_id`.
+Implemented as a project hook in `scripts/multi-tenant-check.py`, registered
+under `.ai-dlc.yml` `hooks.custom`.
+
+### DevOps approval gate
+
+PRs touching `.github/workflows/` require an explicit Lead approval comment
+before merge. Implemented as a project rule, enforced by Lead at the review
+stage (no separate hook).
+
+---
+
+## Notes
+
+- The same person may play multiple roles depending on the issue. Sanyojak
+  plays `cloud-architect` for design tickets and `devops-engineer` for build
+  tickets. The role is a function of the work, not the person.
+- The Sanskrit aliases are cosmetic. The construct routes by `persona` and
+  `name`, never by `alias`.
+- This example deliberately uses both `architect` and `implementer` for DB
+  and infra work, showing how design vs build naturally split.

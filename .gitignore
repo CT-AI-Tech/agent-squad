@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+dist/
+build/
+.cache/
+.idea/
+.vscode/
+*.swp
+*.swo
+.ai-dlc.local.yml

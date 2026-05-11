@@ -1,0 +1,41 @@
+# .ai-dlc.yml — example for a project adopting agent-squad
+# This file controls hooks, board manager integration, and project-level settings.
+#
+# Schema: agent-squad/contract/lifecycle-hooks.md (hooks block)
+#         ai-dlc-board-manager (board fields, if used)
+
+# ─── construct version ────────────────────────────────────────────────────
+construct_version: ">=0.1.0"
+
+# ─── hooks ────────────────────────────────────────────────────────────────
+hooks:
+  # Built-in hooks from agent-squad
+  branch_guard: enabled        # blocks edits on protected branches + lane discipline
+  rebase_guard: enabled        # auto-rebase onto default branch before each commit
+
+  # Project-specific custom hooks
+  custom:
+    - event: pre-pr
+      handler: ./scripts/multi-tenant-check.py
+      mode: enabled
+    - event: post-pr
+      handler: ./scripts/notify-slack.sh
+      mode: warn
+
+# ─── board manager integration (only if ai-dlc-board-manager is installed) ─
+plan_file: ProjectPlan.md
+github_repo: your-org/your-repo
+github_project: "Your Project — AI Development Board"
+
+done_milestones:
+  - "MVP1·M1: Admin API + Admin UI + Multi-site"
+
+team_size: 2
+wip_limit: 1
+sprint_capacity: 4
+stale_threshold_days: 2
+pr_queue_max: 3
+team_members:
+  - your-handle
+
+housekeep_slack_channel: "#dev-board"

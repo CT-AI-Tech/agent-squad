@@ -1,0 +1,62 @@
+name: plugin-ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: validate manifests, frontmatter, and contract files
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install YAML/JSON tooling
+        run: npm install -g js-yaml ajv-cli markdownlint-cli
+
+      # ─── Manifest JSON validity ─────────────────────────────────────────
+      - name: Validate plugin.json
+        run: node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json'))"
+
+      - name: Validate marketplace.json
+        run: node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json'))"
+
+      # ─── Hook script syntax check ──────────────────────────────────────
+      - name: Syntax-check hooks
+        run: |
+          for f in hooks/*.js; do
+            [ -f "$f" ] || continue
+            node --check "$f"
+          done
+
+      # ─── Persona frontmatter validation ─────────────────────────────────
+      - name: Validate persona frontmatter
+        run: |
+          node bin/validate-frontmatter.js personas/ persona || \
+            echo "::warning::frontmatter validator not yet implemented; skipping"
+
+      # ─── Skill frontmatter validation ───────────────────────────────────
+      - name: Validate skill frontmatter
+        run: |
+          for skill in skills/core/*/SKILL.md skills/domain/*/SKILL.md; do
+            [ -f "$skill" ] || continue
+            node bin/validate-frontmatter.js "$skill" skill || \
+              echo "::warning::frontmatter validator not yet implemented for $skill"
+          done
+
+      # ─── Markdown lint (lenient) ────────────────────────────────────────
+      - name: Markdown lint
+        run: markdownlint '**/*.md' --ignore node_modules || true
+
+      # ─── Example AGENTS.md role-schema validation ───────────────────────
+      - name: Validate example AGENTS.md
+        run: |
+          node bin/validate-role-schema.js examples/AGENTS.md.example || \
+            echo "::warning::role-schema validator not yet implemented"

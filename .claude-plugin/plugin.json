@@ -1,0 +1,40 @@
+{
+  "name": "agent-squad",
+  "version": "0.1.0",
+  "description": "Organisation-wide agent construct: personas, role schema, self-review format, lifecycle hooks. Pluggable domain skills layer on top.",
+  "author": {
+    "name": "agent-squad core",
+    "email": ""
+  },
+  "homepage": "",
+  "repository": "",
+  "license": "MIT",
+  "keywords": [
+    "agent",
+    "ai-dlc",
+    "construct",
+    "personas",
+    "role-schema",
+    "skills"
+  ],
+  "construct": {
+    "personas_dir": "personas/",
+    "skills_dir": "skills/",
+    "contract_dir": "contract/",
+    "hooks_dir": "hooks/",
+    "examples_dir": "examples/"
+  },
+  "personas": [
+    "personas/lead.md",
+    "personas/architect.md",
+    "personas/implementer.md"
+  ],
+  "skills": [
+    "skills/core/implement/SKILL.md",
+    "skills/core/finish-feature/SKILL.md"
+  ],
+  "hooks": [
+    "hooks/branch-guard.js",
+    "hooks/rebase-guard.js"
+  ]
+}

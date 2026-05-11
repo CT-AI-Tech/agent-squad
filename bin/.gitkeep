@@ -1,0 +1,4 @@
+# bin/ — language-neutral CLI tools
+# - validate-frontmatter.js (planned): validates persona/skill frontmatter
+# - validate-role-schema.js (planned): validates project AGENTS.md role block
+# Implementations land alongside the v0.4 board-manager migration.
