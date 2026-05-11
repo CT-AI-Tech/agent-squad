@@ -2,7 +2,21 @@
 
 This guide walks you from zero to a working role-mapped project.
 
-## 1. Install
+## 0. Install agent-squad's own dependencies (once)
+
+The construct uses `js-yaml` in its validators and skill hooks. Install once
+in the agent-squad directory:
+
+```bash
+cd /path/to/agent-squad
+npm install
+```
+
+This creates `node_modules/` that the hook scripts and validators resolve at
+runtime. Skip this step and the hooks will print a clear error telling you to
+run it.
+
+## 1. Install agent-squad as a plugin
 
 Install `agent-squad` as a Claude Code plugin in your project repo:
 
@@ -72,12 +86,33 @@ Before writing your own skill or persona override, read [CONTRACT.md](CONTRACT.m
 and [`contract/`](contract/). The contract surface is small on purpose; everything
 else is internal and may move.
 
+## Verifying agent-squad itself
+
+Before pushing changes to agent-squad, run the local CI dry-run from its repo:
+
+```bash
+cd /path/to/agent-squad
+bash tests/ci-dry-run.sh
+```
+
+This runs the same checks the GitHub workflow runs — manifest validity, hook
+syntax, persona and skill frontmatter, the example AGENTS.md role schema, and
+31 smoke tests across all hooks and validators.
+
 ## Troubleshooting
 
-- *Lane validation fails on commit* — branch-guard blocks edits to files outside
-  your role's `write` lane. If this is intentional, get Lead to widen the lane in
-  `AGENTS.md`. Don't disable the hook silently.
-- *Skill doesn't auto-trigger* — check `persona_affinity` in the skill's frontmatter
-  matches your current role's persona.
-- *Self-review section missing on PR* — `finish-feature` will refuse to open the PR
-  until the self-review template is filled. See [`contract/self-review-format.md`](contract/self-review-format.md).
+- *Lane validation fails on edit* — `branch-guard` blocks edits to files
+  outside the active role's `write` lane (read from `.agent-squad/session.yml`).
+  If the violation is intentional, ask Lead to widen the lane in `AGENTS.md`.
+  Don't disable the hook silently.
+- *Hook errors with "js-yaml not found"* — run `npm install` in the agent-squad
+  directory (see step 0).
+- *Skill doesn't auto-trigger* — check `persona_affinity` in the skill's
+  frontmatter matches your current role's persona.
+- *Self-review block rejected on PR* — `finish-feature` invokes
+  `validate-self-review` which enforces the per-persona format. Read the rejection
+  message — it points at the failing section. See [`contract/self-review-format.md`](contract/self-review-format.md).
+- *Session marker not found* — the `pre-implement` hook
+  (`check-brief-and-contract`) writes `.agent-squad/session.yml` after validating
+  the brief. If the marker is missing, the brief is missing, has no testable
+  check, or the role isn't in `AGENTS.md`. The hook output tells you which.

@@ -75,9 +75,18 @@ project doesn't use `ai-dlc-board-manager`, this hook is a no-op.
 - [`contract/governance.md`](../../../contract/governance.md) — rules around PR + self-review
 - [`skills/core/implement/SKILL.md`](../implement/SKILL.md) — what comes before
 
-## Migration note (v0.1)
+## Implementation notes
 
-Handler scripts `hooks/validate-self-review.js` and `hooks/move-to-pr-review.js`
-are being ported from `ai-dlc-board-manager` v0.3 in the v0.4 → v0.5 migration
-window. The board-manager v0.4 release prints a deprecation warning; v0.5
-removes the duplicates and hard-deps on `agent-squad >= 0.1`.
+Both handler scripts live in `hooks/` next to this SKILL.md.
+
+`validate-self-review.js` reads the PR body from `payload.pr_body` (if the
+calling skill staged it on stdin) or from `.agent-squad/pr-body.md`. It loads
+the active role from `.agent-squad/session.yml` (written by the
+`pre-implement` hook) and applies the persona-appropriate validation rules
+from [`contract/self-review-format.md`](../../../contract/self-review-format.md).
+
+`move-to-pr-review.js` archives the session marker (so the next session
+starts clean) and emits a structured `NEXT_STEP move_issue_status ...` line
+on stdout when `.ai-dlc.yml` indicates a board-manager integration. The
+calling skill reads this and performs the column transition in its own
+process — this hook does not invoke `gh` or `git` itself.

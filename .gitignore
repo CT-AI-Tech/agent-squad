@@ -12,3 +12,4 @@ build/
 *.swp
 *.swo
 .ai-dlc.local.yml
+.agent-squad/session.yml

@@ -82,9 +82,18 @@ Exit code 0 = pass; 1 = block; 2 = warn.
 - [`contract/governance.md`](../../../contract/governance.md) — non-negotiable rules
 - [`skills/core/finish-feature/SKILL.md`](../finish-feature/SKILL.md) — what comes next
 
-## Migration note (v0.1)
+## Implementation notes
 
-The handler script `hooks/check-brief-and-contract.js` is being ported from
-`ai-dlc-board-manager` v0.3 in the v0.4 → v0.5 migration window. Until v0.5,
-projects with both plugins installed will see deprecation warnings from the
-board-manager copy.
+The handler script `hooks/check-brief-and-contract.js` lives alongside this
+SKILL.md and is invoked with the lifecycle context payload on stdin. It:
+
+1. Locates the brief at `.agent-squad/brief.md`, `briefs/<issue>.md`, or
+   `briefs/<issue>-*.md` (in that priority order).
+2. Validates the brief's frontmatter and presence of a non-empty
+   `## Testable Check` section.
+3. If the brief's frontmatter declares a `contract:` path, verifies the file
+   exists in the default branch via `git cat-file`.
+4. Reads the project's `AGENTS.md`, resolves the role assigned in the
+   payload, and writes the resolved snapshot to `.agent-squad/session.yml`
+   for downstream hooks (`branch-guard`, `validate-self-review`,
+   `move-to-pr-review`) to consume.

@@ -9,7 +9,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    name: validate manifests, frontmatter, and contract files
+    name: validate manifests, frontmatter, hooks, and tests
     steps:
       - uses: actions/checkout@v4
 
@@ -18,8 +18,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install YAML/JSON tooling
-        run: npm install -g js-yaml ajv-cli markdownlint-cli
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
 
       # ─── Manifest JSON validity ─────────────────────────────────────────
       - name: Validate plugin.json
@@ -29,34 +29,43 @@ jobs:
         run: node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json'))"
 
       # ─── Hook script syntax check ──────────────────────────────────────
-      - name: Syntax-check hooks
+      - name: Syntax-check construct hooks
         run: |
           for f in hooks/*.js; do
             [ -f "$f" ] || continue
             node --check "$f"
           done
 
-      # ─── Persona frontmatter validation ─────────────────────────────────
-      - name: Validate persona frontmatter
+      - name: Syntax-check skill hooks
         run: |
-          node bin/validate-frontmatter.js personas/ persona || \
-            echo "::warning::frontmatter validator not yet implemented; skipping"
-
-      # ─── Skill frontmatter validation ───────────────────────────────────
-      - name: Validate skill frontmatter
-        run: |
-          for skill in skills/core/*/SKILL.md skills/domain/*/SKILL.md; do
-            [ -f "$skill" ] || continue
-            node bin/validate-frontmatter.js "$skill" skill || \
-              echo "::warning::frontmatter validator not yet implemented for $skill"
+          for f in skills/core/*/hooks/*.js; do
+            [ -f "$f" ] || continue
+            node --check "$f"
           done
 
-      # ─── Markdown lint (lenient) ────────────────────────────────────────
-      - name: Markdown lint
-        run: markdownlint '**/*.md' --ignore node_modules || true
+      # ─── Persona frontmatter validation ─────────────────────────────────
+      - name: Validate persona frontmatter
+        run: node bin/validate-frontmatter.js personas/lead.md personas/architect.md personas/implementer.md
+
+      # ─── Skill frontmatter validation ───────────────────────────────────
+      - name: Validate core skill frontmatter
+        run: |
+          for skill in skills/core/*/SKILL.md; do
+            [ -f "$skill" ] || continue
+            node bin/validate-frontmatter.js "$skill"
+          done
+
+      - name: Validate domain skill frontmatter (if any)
+        run: |
+          shopt -s nullglob
+          for skill in skills/domain/*/SKILL.md; do
+            node bin/validate-frontmatter.js "$skill"
+          done
 
       # ─── Example AGENTS.md role-schema validation ───────────────────────
-      - name: Validate example AGENTS.md
-        run: |
-          node bin/validate-role-schema.js examples/AGENTS.md.example || \
-            echo "::warning::role-schema validator not yet implemented"
+      - name: Validate example AGENTS.md role schema
+        run: node bin/validate-role-schema.js examples/AGENTS.md.example
+
+      # ─── Smoke tests for hooks + validators ─────────────────────────────
+      - name: Run smoke tests
+        run: bash tests/run.sh

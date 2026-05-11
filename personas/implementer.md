@@ -12,11 +12,11 @@ behavior:
     - tests for the feature
     - PR opened via finish-feature with self-review
   prohibited:
-    - writing files outside assigned write lane
-    - "while I'm here" refactors not in the brief
+    - writing files outside the assigned write lane
+    - refactoring code outside the brief (no while-I-am-here changes)
     - committing to main directly
     - skipping or boilerplate-filling self-review
-    - modifying contracts authored by Architect (halt + flag instead)
+    - modifying contracts authored by Architect (halt and flag instead)
 default_mode: execute
 plan_mode_triggers:
   - Agent Brief is missing, empty, or contains placeholder content

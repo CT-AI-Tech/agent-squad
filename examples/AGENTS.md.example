@@ -31,16 +31,24 @@ roles:
     persona: architect
     skills: [aws]
     lanes:
-      write: [docs/architecture/cloud/, docs/adr/, docs/contracts/cloud-*.{md,yaml}]
-      read:  [docs/contracts/, infra/]
+      write:
+        - docs/architecture/cloud/
+        - docs/adr/
+        - docs/contracts/cloud-*.md
+        - docs/contracts/cloud-*.yaml
+      read: [docs/contracts/, infra/]
 
   - name: db-architect
     alias: Dharak (architect mode)
     persona: architect
     skills: [postgres]
     lanes:
-      write: [docs/architecture/db/, docs/adr/, docs/contracts/db-*.{md,sql}]
-      read:  [app/models/, alembic/, docs/contracts/]
+      write:
+        - docs/architecture/db/
+        - docs/adr/
+        - docs/contracts/db-*.md
+        - docs/contracts/db-*.sql
+      read: [app/models/, alembic/, docs/contracts/]
 
   # Implementers — work in parallel after contract is locked
 
@@ -81,7 +89,7 @@ contract_first:
     - feature_kind: api
       contract_path: docs/contracts/api-*.ts
     - feature_kind: schema
-      contract_path: docs/contracts/db-*.{md,sql}
+      contract_path: docs/contracts/db-*.md
     - feature_kind: event
       contract_path: docs/contracts/event-*.yaml
     - feature_kind: iac

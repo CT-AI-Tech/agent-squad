@@ -43,6 +43,14 @@ Skills and hooks MAY register handlers for the named lifecycle events in
 [`contract/lifecycle-hooks.md`](contract/lifecycle-hooks.md). Event names and
 context payload shape are part of the contract.
 
+## 5a. Tool hooks (host-specific)
+
+The two named tool hooks (`branch-guard`, `rebase-guard`) and the
+`.agent-squad/session.yml` marker file format defined in
+[`contract/tool-hooks.md`](contract/tool-hooks.md) are part of the contract.
+Tool hooks fire on host tool calls (e.g. Claude Code `PreToolUse`) rather than
+at workflow-stage transitions, and are host-specific by design.
+
 ## 6. Hooks config schema
 
 The `.ai-dlc.yml` `hooks:` block schema is defined in

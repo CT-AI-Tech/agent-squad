@@ -55,4 +55,11 @@ Skills declare their minimum construct version. Breaking changes only on majors.
 
 ## Status
 
-Pre-1.0. Contract may shift in 0.x releases. Stabilises at v1.0.
+**v0.1.0 — contract complete, enforcement active.**
+
+- All three personas defined with behaviour, lanes, plan-mode triggers, and self-review formats.
+- Construct hooks (`branch-guard`, `rebase-guard`) and skill lifecycle hooks (`check-brief-and-contract`, `validate-self-review`, `move-to-pr-review`) are fully implemented.
+- CI validates manifest, frontmatter, role schema, hook syntax, and runs smoke tests.
+- Pre-1.0: contract surface may evolve in 0.x. Locks at v1.0.
+
+Run `bash tests/ci-dry-run.sh` to verify everything works locally before pushing.
