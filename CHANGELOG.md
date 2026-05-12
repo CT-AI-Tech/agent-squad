@@ -6,7 +6,7 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
-## [0.1.1] — wire tool hooks into Claude Code; fix marketplace schema; ship session docs
+## [0.1.1] — wire tool hooks; fix plugin + marketplace manifests; ship session docs
 
 ### Fixed
 - `hooks/hooks.json` added so Claude Code's plugin runtime actually
@@ -21,8 +21,15 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
   in a single-plugin-description shape (`version`, `category`, `tags`,
   `compatibility`, ...) that Claude Code's plugin loader rejects with
   "owner: Invalid input: expected object, plugins: Invalid input:
-  expected array". The metadata that belonged elsewhere stays in
-  `plugin.json`. No contract change.
+  expected array". No contract change.
+- `.claude-plugin/plugin.json` pruned to the fields Claude Code's
+  loader accepts. Removed empty-string `homepage`/`repository` (failed
+  URL validation), removed the path-list `hooks` and `skills` arrays
+  (loader rejects them as "Invalid input" — hooks are wired via
+  `hooks/hooks.json`, skills auto-discovered from `skills/**/SKILL.md`),
+  and dropped the custom `construct` / `personas` blocks that no
+  consumer reads. Same minimal shape as `ai-dlc-board-manager`'s
+  working manifest.
 
 ### Added
 - `CLAUDE.md` — project guidance auto-loaded by Claude Code / Cowork
