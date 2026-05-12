@@ -18,7 +18,7 @@ PR-creation gate — no other skill opens PRs in the construct.
 
 This skill is **persona-aware**: it refuses to run for `architect` or `lead`
 roles. Architects open contract or ADR PRs through their own flow (described in
-[`personas/architect.md`](../../../personas/architect.md)), and Lead opens
+[`personas/architect.md`](../../personas/architect.md)), and Lead opens
 governance PRs manually.
 
 ## When this skill applies
@@ -37,7 +37,7 @@ testable check is verifiably met.
 ### 2. Self-review block validation (`pre-pr` hook)
 
 The `pre-pr` hook reads the prepared PR body and validates the self-review
-block per [`contract/self-review-format.md#implementer`](../../../contract/self-review-format.md).
+block per [`contract/self-review-format.md#implementer`](../../contract/self-review-format.md).
 
 The block MUST contain, with exact section names:
 
@@ -70,10 +70,10 @@ project doesn't use `ai-dlc-board-manager`, this hook is a no-op.
 
 ## References
 
-- [`personas/implementer.md`](../../../personas/implementer.md) — persona contract
-- [`contract/self-review-format.md`](../../../contract/self-review-format.md) — block format
-- [`contract/governance.md`](../../../contract/governance.md) — rules around PR + self-review
-- [`skills/core/implement/SKILL.md`](../implement/SKILL.md) — what comes before
+- [`personas/implementer.md`](../../personas/implementer.md) — persona contract
+- [`contract/self-review-format.md`](../../contract/self-review-format.md) — block format
+- [`contract/governance.md`](../../contract/governance.md) — rules around PR + self-review
+- [`skills/implement/SKILL.md`](../implement/SKILL.md) — what comes before
 
 ## Implementation notes
 
@@ -83,7 +83,7 @@ Both handler scripts live in `hooks/` next to this SKILL.md.
 calling skill staged it on stdin) or from `.agent-squad/pr-body.md`. It loads
 the active role from `.agent-squad/session.yml` (written by the
 `pre-implement` hook) and applies the persona-appropriate validation rules
-from [`contract/self-review-format.md`](../../../contract/self-review-format.md).
+from [`contract/self-review-format.md`](../../contract/self-review-format.md).
 
 `move-to-pr-review.js` archives the session marker (so the next session
 starts clean) and emits a structured `NEXT_STEP move_issue_status ...` line

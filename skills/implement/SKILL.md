@@ -77,10 +77,10 @@ Exit code 0 = pass; 1 = block; 2 = warn.
 
 ## References
 
-- [`personas/implementer.md`](../../../personas/implementer.md) — persona contract
-- [`contract/workflow.md`](../../../contract/workflow.md) — full workflow
-- [`contract/governance.md`](../../../contract/governance.md) — non-negotiable rules
-- [`skills/core/finish-feature/SKILL.md`](../finish-feature/SKILL.md) — what comes next
+- [`personas/implementer.md`](../../personas/implementer.md) — persona contract
+- [`contract/workflow.md`](../../contract/workflow.md) — full workflow
+- [`contract/governance.md`](../../contract/governance.md) — non-negotiable rules
+- [`skills/finish-feature/SKILL.md`](../finish-feature/SKILL.md) — what comes next
 
 ## Implementation notes
 
