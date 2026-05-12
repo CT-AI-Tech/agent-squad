@@ -6,7 +6,7 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
-## [0.1.1] — wire tool hooks into Claude Code; ship session docs
+## [0.1.1] — wire tool hooks into Claude Code; fix marketplace schema; ship session docs
 
 ### Fixed
 - `hooks/hooks.json` added so Claude Code's plugin runtime actually
@@ -16,6 +16,13 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
   v0.3 redundantly wired the same scripts. Without this file, the
   board-manager v0.4 migration (which removes that redundant wiring)
   would have silently disabled enforcement. No contract change.
+- `.claude-plugin/marketplace.json` rewritten to match the Claude Code
+  marketplace catalog schema (`owner`, `plugins[]`). The v0.1.0 file was
+  in a single-plugin-description shape (`version`, `category`, `tags`,
+  `compatibility`, ...) that Claude Code's plugin loader rejects with
+  "owner: Invalid input: expected object, plugins: Invalid input:
+  expected array". The metadata that belonged elsewhere stays in
+  `plugin.json`. No contract change.
 
 ### Added
 - `CLAUDE.md` — project guidance auto-loaded by Claude Code / Cowork
