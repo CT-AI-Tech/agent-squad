@@ -55,7 +55,7 @@ Skills declare their minimum construct version. Breaking changes only on majors.
 
 ## Status
 
-**v0.1.0 — contract complete, enforcement active.**
+**v0.1.1 — contract complete, enforcement active, tool hooks wired into Claude Code.**
 
 - All three personas defined with behaviour, lanes, plan-mode triggers, and self-review formats.
 - Construct hooks (`branch-guard`, `rebase-guard`) and skill lifecycle hooks (`check-brief-and-contract`, `validate-self-review`, `move-to-pr-review`) are fully implemented.

@@ -2,7 +2,7 @@
   "$schema": "https://claude.ai/schemas/plugin-marketplace.json",
   "name": "agent-squad",
   "displayName": "agent-squad",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "category": "agent-construct",
   "tagline": "Organisation-wide agent construct — personas, roles, skills.",
   "description": "agent-squad defines the behaviour contract for AI engineering agents: three personas (lead, architect, implementer), a role-composition schema, a self-review format, and lifecycle hooks. Domain skills (aws, python, dicom, ...) plug in on top. Pairs with ai-dlc-board-manager for full project workflow.",

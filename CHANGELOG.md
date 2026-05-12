@@ -6,6 +6,23 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.1.1] — wire tool hooks into Claude Code; ship session docs
+
+### Fixed
+- `hooks/hooks.json` added so Claude Code's plugin runtime actually
+  registers `branch-guard` (on `PreToolUse:Write|Edit`) and `rebase-guard`
+  (on `PreToolUse:Bash`). In v0.1.0 the hook scripts shipped but had no
+  runtime registration — they only fired because `ai-dlc-board-manager`
+  v0.3 redundantly wired the same scripts. Without this file, the
+  board-manager v0.4 migration (which removes that redundant wiring)
+  would have silently disabled enforcement. No contract change.
+
+### Added
+- `CLAUDE.md` — project guidance auto-loaded by Claude Code / Cowork
+  sessions working in this repo.
+- `SESSION_HANDOFF.md` — record of the bootstrap session, retained as
+  historical context for early-life contributors.
+
 ## [0.1.0] — initial release
 
 ### Added — contract
