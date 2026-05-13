@@ -6,6 +6,11 @@ personas plus domain skills plus file lanes. The example below is the
 
 Replace this content with your own role mapping when you adopt agent-squad.
 
+> **See also:** [`examples/roles/`](roles/) — single-role fragment
+> templates for the common cases (lead, cloud-architect, backend-dev,
+> frontend-dev, devops-engineer). Faster starting point than copying
+> this whole file when you only need a couple of roles.
+
 ---
 
 ## Role mapping

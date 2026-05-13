@@ -40,6 +40,11 @@ node "$ROOT/bin/validate-frontmatter.js" "$ROOT/personas/lead.md" "$ROOT/persona
 node "$ROOT/bin/validate-frontmatter.js" "$ROOT/skills/implement/SKILL.md" "$ROOT/skills/finish-feature/SKILL.md" >/dev/null 2>&1 \
   && pass "skills validate" || fail "skills validate" "non-zero exit"
 
+# Positive: domain skill stubs (v0.2 starter set)
+DOMAIN_STUBS="$ROOT/skills/domain/aws/SKILL.md $ROOT/skills/domain/python/SKILL.md $ROOT/skills/domain/fastapi/SKILL.md $ROOT/skills/domain/postgres/SKILL.md $ROOT/skills/domain/react/SKILL.md $ROOT/skills/domain/typescript/SKILL.md $ROOT/skills/domain/docker/SKILL.md $ROOT/skills/domain/terraform/SKILL.md $ROOT/skills/domain/github-actions/SKILL.md"
+node "$ROOT/bin/validate-frontmatter.js" $DOMAIN_STUBS >/dev/null 2>&1 \
+  && pass "domain skill stubs validate" || fail "domain skill stubs validate" "$(node "$ROOT/bin/validate-frontmatter.js" $DOMAIN_STUBS 2>&1)"
+
 # Negative: missing fields
 cat > "$SCRATCH/bad-persona.md" <<'P'
 ---
@@ -120,6 +125,53 @@ A
 node "$ROOT/bin/validate-role-schema.js" "$SCRATCH/dup.md" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "more than once" "$SCRATCH/out" \
   && pass "rejects duplicate role names" || fail "rejects duplicate role names" "$(cat $SCRATCH/out)"
+
+# ─── role templates (examples/roles/) ───────────────────────────────────
+section "role templates"
+
+# Each *.role.md is a single-role fragment. Wrap it in a synthetic AGENTS.md
+# (with a stub lead if the fragment is not itself lead) and validate.
+for f in "$ROOT/examples/roles/"*.role.md; do
+  base=$(basename "$f" .role.md)
+  # Extract the first ```yaml block, content only (without the fences).
+  awk '/^```yaml$/{flag=1;next}/^```$/{if(flag){exit}}flag' "$f" > "$SCRATCH/fragment-$base.yml"
+  if [ ! -s "$SCRATCH/fragment-$base.yml" ]; then
+    fail "role template: $base extracts yaml" "yaml block empty or missing"
+    continue
+  fi
+  out="$SCRATCH/role-test-$base.md"
+  if grep -q "persona: lead" "$SCRATCH/fragment-$base.yml"; then
+    # Lead fragment — wrap as-is
+    {
+      printf '%s\n' '# test'
+      printf '```yaml\n'
+      printf 'construct_version: ">=0.1.0"\n'
+      printf 'roles:\n'
+      sed 's/^/  /' "$SCRATCH/fragment-$base.yml"
+      printf '```\n'
+    } > "$out"
+  else
+    # Non-lead fragment — add a stub lead alongside
+    {
+      printf '%s\n' '# test'
+      printf '```yaml\n'
+      printf 'construct_version: ">=0.1.0"\n'
+      printf 'roles:\n'
+      printf '  - name: lead\n'
+      printf '    persona: lead\n'
+      printf '    skills: []\n'
+      printf '    lanes:\n'
+      printf '      write: []\n'
+      sed 's/^/  /' "$SCRATCH/fragment-$base.yml"
+      printf '```\n'
+    } > "$out"
+  fi
+  if node "$ROOT/bin/validate-role-schema.js" "$out" >/dev/null 2>&1; then
+    pass "role template: $base validates when composed"
+  else
+    fail "role template: $base validates when composed" "$(node "$ROOT/bin/validate-role-schema.js" "$out" 2>&1)"
+  fi
+done
 
 # ─── branch-guard ────────────────────────────────────────────────────────
 section "branch-guard"

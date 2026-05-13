@@ -6,6 +6,36 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+### Added
+- `examples/roles/` — starter library of single-role fragment templates,
+  one per file: `lead`, `cloud-architect`, `backend-dev`, `frontend-dev`,
+  `devops-engineer`. Each `*.role.md` is a copy-paste-ready yaml entry
+  for a project's `AGENTS.md` `roles:` list, plus prose covering when
+  to use the role, common variations, and skills implied. Fragments are
+  not standalone `AGENTS.md` files (the validator requires a `lead`
+  role, so a single non-lead fragment can't validate alone); smoke tests
+  wrap each fragment with a stub lead before validating.
+- `examples/roles/README.md` — index of the templates, usage
+  instructions, and rules for adding new templates.
+- `skills/domain/{aws,python,fastapi,postgres,react,typescript,docker,terraform,github-actions}/SKILL.md`
+  — nine domain-skill stubs covering every skill the new role templates
+  reference. Each is a minimal but contract-valid `SKILL.md`
+  (frontmatter + short body). Real content for these skills is deferred
+  to v0.3 per `SESSION_HANDOFF.md`. `aws` uses `persona_affinity: [both]`
+  with the required `## Architect mode` and `## Implementer mode` body
+  sections per `CLAUDE.md`.
+- `tests/run.sh` — new `role templates` section that synthesises a
+  composed `AGENTS.md` for each fragment and validates via the existing
+  `validate-role-schema.js`. Domain-stub frontmatter validation folded
+  into the existing `validate-frontmatter` section. Suite total now 38
+  passing (up from 32).
+
+### Changed
+- `examples/AGENTS.md.example` — added a "See also" pointer to
+  `examples/roles/` so adopters who only need a couple of roles can
+  start from the smaller fragments instead of copying the full project
+  example.
+
 ### Fixed
 - `hooks/branch-guard.js` now bails with exit `0` when the `file_path`
   argument resolves outside the repo root, *before* the protected-branch
