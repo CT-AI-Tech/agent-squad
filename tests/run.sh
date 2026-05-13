@@ -37,7 +37,7 @@ node "$ROOT/bin/validate-frontmatter.js" "$ROOT/personas/lead.md" "$ROOT/persona
   && pass "personas validate" || fail "personas validate" "non-zero exit"
 
 # Positive: real skills
-node "$ROOT/bin/validate-frontmatter.js" "$ROOT/skills/core/implement/SKILL.md" "$ROOT/skills/core/finish-feature/SKILL.md" >/dev/null 2>&1 \
+node "$ROOT/bin/validate-frontmatter.js" "$ROOT/skills/implement/SKILL.md" "$ROOT/skills/finish-feature/SKILL.md" >/dev/null 2>&1 \
   && pass "skills validate" || fail "skills validate" "non-zero exit"
 
 # Negative: missing fields
@@ -145,6 +145,10 @@ echo '{"tool_input":{"file_path":"x.txt"}}' | node "$ROOT/hooks/branch-guard.js"
 [ $? -eq 2 ] && grep -q "branch" "$SCRATCH/out" \
   && pass "branch-guard: blocks on main" || fail "branch-guard: blocks on main" "exit=$?  out=$(cat $SCRATCH/out)"
 
+# Test 2b: on main but file is outside the repo → allow (plan files, etc.)
+echo "{\"tool_input\":{\"file_path\":\"$SCRATCH/outside-repo.md\"}}" | node "$ROOT/hooks/branch-guard.js" >"$SCRATCH/out" 2>&1
+[ $? -eq 0 ] && pass "branch-guard: allows outside-repo path on main" || fail "branch-guard: allows outside-repo path on main" "exit=$?  out=$(cat $SCRATCH/out)"
+
 # Test 3: feature branch, no marker → allow
 git checkout -q feature/42-test
 echo '{"tool_input":{"file_path":"x.txt"}}' | node "$ROOT/hooks/branch-guard.js" >"$SCRATCH/out" 2>&1
@@ -249,7 +253,7 @@ A
 git add AGENTS.md; git commit -q -m "init"
 
 # Test 1: missing brief
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "no brief found" "$SCRATCH/out" \
   && pass "check-brief: rejects missing brief" || fail "check-brief: rejects missing brief" "$(cat $SCRATCH/out)"
 
@@ -265,7 +269,7 @@ role: backend-dev
 
 Some description.
 B
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "Testable Check" "$SCRATCH/out" \
   && pass "check-brief: rejects brief without testable check" || fail "check-brief: rejects brief without testable check" "$(cat $SCRATCH/out)"
 
@@ -284,7 +288,7 @@ Build CRUD endpoints.
 
 pytest tests/test_api.py
 B
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 0 ] && [ -f .agent-squad/session.yml ] && grep -q "role: backend-dev" .agent-squad/session.yml \
   && pass "check-brief: valid brief writes session marker" || fail "check-brief: valid brief writes session marker" "exit=$?  out=$(cat $SCRATCH/out)  marker=$([ -f .agent-squad/session.yml ] && cat .agent-squad/session.yml)"
 
@@ -304,7 +308,7 @@ Build CRUD endpoints per locked contract.
 
 pytest tests/test_api.py
 B
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "contract" "$SCRATCH/out" \
   && pass "check-brief: rejects when contract not in main" || fail "check-brief: rejects when contract not in main" "$(cat $SCRATCH/out)"
 
@@ -312,11 +316,11 @@ echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "
 mkdir -p docs/contracts
 echo "# API contract" > docs/contracts/api-todo.md
 git add docs/contracts; git commit -q -m "contract"
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 0 ] && pass "check-brief: passes with contract in main" || fail "check-brief: passes with contract in main" "exit=$?  out=$(cat $SCRATCH/out)"
 
 # Test 6: role not in AGENTS.md
-echo '{"event":"pre-implement","issue_number":42,"role":"nonexistent-role"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"nonexistent-role"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "not found" "$SCRATCH/out" \
   && pass "check-brief: rejects unknown role" || fail "check-brief: rejects unknown role" "$(cat $SCRATCH/out)"
 
@@ -333,7 +337,7 @@ role: lead
 
 something
 B
-echo '{"event":"pre-implement","issue_number":99,"role":"lead"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"pre-implement","issue_number":99,"role":"lead"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "implementer" "$SCRATCH/out" \
   && pass "check-brief: rejects non-implementer persona" || fail "check-brief: rejects non-implementer persona" "$(cat $SCRATCH/out)"
 
@@ -345,7 +349,7 @@ cd "$SCRATCH/proj"
 
 # Test 1: missing body
 rm -f .agent-squad/pr-body.md
-echo '{}' | node "$ROOT/skills/core/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
+echo '{}' | node "$ROOT/skills/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "PR body not found" "$SCRATCH/out" \
   && pass "validate-self-review: rejects missing body" || fail "validate-self-review: rejects missing body" "$(cat $SCRATCH/out)"
 
@@ -355,7 +359,7 @@ cat > .agent-squad/pr-body.md <<'PR'
 
 Build CRUD endpoints.
 PR
-echo '{}' | node "$ROOT/skills/core/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
+echo '{}' | node "$ROOT/skills/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "Agent self-review" "$SCRATCH/out" \
   && pass "validate-self-review: rejects body missing self-review header" || fail "validate-self-review: rejects body missing self-review header" "$(cat $SCRATCH/out)"
 
@@ -372,7 +376,7 @@ role: backend-dev
 
 pytest tests/test_api.py
 B
-echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/core/implement/hooks/check-brief-and-contract.js" >/dev/null 2>&1
+echo '{"event":"pre-implement","issue_number":42,"role":"backend-dev"}' | node "$ROOT/skills/implement/hooks/check-brief-and-contract.js" >/dev/null 2>&1
 
 cat > .agent-squad/pr-body.md <<'PR'
 ## Agent Brief
@@ -402,7 +406,7 @@ tests/test_api.py - three cases covering create, list, delete
 ### Issues I found and chose not to fix in this PR
 No issues found.
 PR
-echo '{}' | node "$ROOT/skills/core/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
+echo '{}' | node "$ROOT/skills/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 0 ] && pass "validate-self-review: valid implementer body passes" || fail "validate-self-review: valid implementer body passes" "exit=$?  out=$(cat $SCRATCH/out)"
 
 # Test 4: body with placeholder strings should fail
@@ -432,7 +436,7 @@ tests/test_x.py - covers x
 ### Issues I found and chose not to fix in this PR
 none
 PR
-echo '{}' | node "$ROOT/skills/core/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
+echo '{}' | node "$ROOT/skills/finish-feature/hooks/validate-self-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 1 ] && grep -q "placeholder" "$SCRATCH/out" \
   && pass "validate-self-review: rejects placeholder strings" || fail "validate-self-review: rejects placeholder strings" "$(cat $SCRATCH/out)"
 
@@ -441,7 +445,7 @@ section "move-to-pr-review"
 
 # Test 1: no .ai-dlc.yml — should still pass (no-op)
 rm -f .ai-dlc.yml
-echo '{"event":"post-pr","issue_number":42,"pr_url":"https://example/pr/1"}' | node "$ROOT/skills/core/finish-feature/hooks/move-to-pr-review.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"post-pr","issue_number":42,"pr_url":"https://example/pr/1"}' | node "$ROOT/skills/finish-feature/hooks/move-to-pr-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 0 ] && pass "move-to-pr-review: no board config passes" || fail "move-to-pr-review: no board config passes" "$(cat $SCRATCH/out)"
 
 # Test 2: with board config — emits NEXT_STEP
@@ -454,7 +458,7 @@ cat > .agent-squad/session.yml <<'M'
 construct_version: 0.1.0
 role: backend-dev
 M
-echo '{"event":"post-pr","issue_number":42,"pr_url":"https://example/pr/1"}' | node "$ROOT/skills/core/finish-feature/hooks/move-to-pr-review.js" >"$SCRATCH/out" 2>&1
+echo '{"event":"post-pr","issue_number":42,"pr_url":"https://example/pr/1"}' | node "$ROOT/skills/finish-feature/hooks/move-to-pr-review.js" >"$SCRATCH/out" 2>&1
 [ $? -eq 0 ] && grep -q "NEXT_STEP move_issue_status issue=42" "$SCRATCH/out" \
   && pass "move-to-pr-review: emits NEXT_STEP when board configured" || fail "move-to-pr-review: emits NEXT_STEP when board configured" "$(cat $SCRATCH/out)"
 

@@ -114,6 +114,13 @@ const filePath =
 
 if (tryGit(['rev-parse', '--git-dir']) === null) process.exit(0);
 
+const repoRoot = tryGit(['rev-parse', '--show-toplevel']);
+if (filePath && repoRoot) {
+  const absFile = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+  const relToRepo = path.relative(repoRoot, absFile);
+  if (relToRepo.startsWith('..') || path.isAbsolute(relToRepo)) process.exit(0);
+}
+
 const branch = tryGit(['rev-parse', '--abbrev-ref', 'HEAD']);
 
 if (PROTECTED_BRANCHES.includes(branch)) {
@@ -128,9 +135,9 @@ if (PROTECTED_BRANCHES.includes(branch)) {
 if (filePath) {
   const session = readSessionMarker();
   if (session && session.role && Array.isArray(session.write_lanes) && session.write_lanes.length > 0) {
-    const repoRoot = tryGit(['rev-parse', '--show-toplevel']) || process.cwd();
+    const root = repoRoot || process.cwd();
     const absFile = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
-    const relFile = path.relative(repoRoot, absFile).replace(/\\/g, '/');
+    const relFile = path.relative(root, absFile).replace(/\\/g, '/');
     const inLane = session.write_lanes.some(g => globMatch(g, relFile));
     if (!inLane) {
       const msg =

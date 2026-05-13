@@ -6,6 +6,22 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+### Fixed
+- `hooks/branch-guard.js` now bails with exit `0` when the `file_path`
+  argument resolves outside the repo root, *before* the protected-branch
+  check. Previously, writes to any path on a protected branch were
+  blocked — including paths outside the working tree (e.g. plan files
+  under `~/.claude/plans/`). The protected-branch rule is meant to keep
+  implementation work off `main`, not to gate every Write tool call the
+  agent makes. The lane-discipline check that follows was already
+  file-path-scoped and is unchanged. Smoke test added in
+  `tests/run.sh` (`branch-guard: allows outside-repo path on main`).
+- `tests/run.sh` updated to reference the flattened skill paths
+  (`skills/<name>/...`) introduced in commit `14a58ad`. The flatten
+  migration left 15 stale `skills/core/<name>/...` references in the
+  test harness; this brought the test count back to green
+  (32/32 pass, up from 19/32).
+
 ## [0.1.1] — wire tool hooks; fix plugin + marketplace manifests; ship session docs
 
 ### Fixed
