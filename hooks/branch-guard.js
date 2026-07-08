@@ -55,6 +55,11 @@ if (filePath && repoRoot) {
   const absFile = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
   const relToRepo = path.relative(repoRoot, absFile);
   if (relToRepo.startsWith('..') || path.isAbsolute(relToRepo)) process.exit(0);
+  // .agent-squad/ is the construct's own working state (session marker,
+  // pr-body.md, usage ledger) - never implementation work, so neither the
+  // protected-branch rule nor lane discipline applies to it.
+  const relNorm = relToRepo.replace(/\\/g, '/');
+  if (relNorm === '.agent-squad' || relNorm.startsWith('.agent-squad/')) process.exit(0);
 }
 
 const branch = tryGit(['rev-parse', '--abbrev-ref', 'HEAD']);

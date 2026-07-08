@@ -28,7 +28,7 @@ the lifecycle layer is the floor that always applies.
 
 | Name | Fires on | Purpose |
 |---|---|---|
-| `branch-guard` | Write, Edit | Block edits on protected branches; enforce role lane discipline when an active-role marker is present |
+| `branch-guard` | Write, Edit | Block edits on protected branches; enforce role lane discipline when an active-role marker is present. Paths outside the repo and paths under `.agent-squad/` (the construct's own working state: session marker, `pr-body.md`, usage ledger) are always allowed — they are never implementation work, so no role needs `.agent-squad/` in its lanes |
 | `rebase-guard` | Bash | Detect `git commit` invocations and auto-rebase the feature branch onto the project default branch before the commit lands |
 | `session-context` | UserPromptSubmit, SessionStart | Inject a one-line description of the active role (persona, role, issue, model hint) into the model's context so the agent knows and announces which persona it is operating as. Informational only — never blocks (always exit 0). Silent when no marker exists |
 | `usage-tracker` | Stop | Record actual token usage per feature: parse the session transcript and update the per-issue ledger (`.agent-squad/usage.json`). Informational only — never blocks (always exit 0). Silent when no marker/issue is active |
