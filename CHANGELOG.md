@@ -6,6 +6,29 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.5.0] — reviewable agent PRs (bot identity)
+
+Enables the human operator to formally review agent PRs. GitHub blocks
+approve / request-changes / inline suggestions on PRs opened by your own
+account; this release lets `finish-feature` open PRs under a dedicated bot
+identity instead.
+
+### Added
+- `AGENT_SQUAD_GH_TOKEN` environment variable (contract surface, defined in
+  `contract/workflow.md#pr-author-identity`). When set, `finish-feature`
+  passes it as `GH_TOKEN` to the `gh pr create` invocation only — commits
+  and pushes keep the session's normal credentials — so the PR is authored
+  by the bot/machine account behind the token and the human operator can
+  approve, request changes, and leave inline suggestions. When unset,
+  behaviour is unchanged (PR opened with the session's own `gh` auth).
+  One bot identity serves the whole squad; per-persona attribution stays in
+  commit metadata. `skills/finish-feature/SKILL.md` bumped to 0.2.0.
+- QUICKSTART step 3a — how to create the bot machine account, issue a
+  fine-grained PAT (Pull requests: read/write, repo-scoped), and where to
+  store it (user environment variable or `.claude/settings.local.json`
+  `env` block; never committed). README gains a "Reviewing agent PRs as a
+  human" section. Troubleshooting entry added for the locked-review symptom.
+
 ### Fixed
 - `hooks/branch-guard.js` — writes under `.agent-squad/` are now exempt from
   both the protected-branch rule and lane discipline. The pre-pr contract

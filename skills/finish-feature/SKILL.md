@@ -1,6 +1,6 @@
 ---
 name: finish-feature
-version: 0.1.0
+version: 0.2.0
 construct_version: ">=0.1.0"
 description: Closes the Implementer's loop. Validates self-review block, lane discipline, and rebase. Opens PR, moves issue to PR Review.
 persona_affinity: [implementer]
@@ -63,6 +63,29 @@ re-invokes the skill.
 
 The skill commits any remaining changes, pushes the branch, and runs
 `gh pr create` with the validated body.
+
+**Bot identity (optional):** if the environment variable
+`AGENT_SQUAD_GH_TOKEN` is set, the skill MUST pass it as `GH_TOKEN` to the
+`gh pr create` invocation only -- the commit and push still use the session's
+normal credentials:
+
+```bash
+# bash
+GH_TOKEN="$AGENT_SQUAD_GH_TOKEN" gh pr create --title "..." --body-file .agent-squad/pr-body.md
+```
+
+```powershell
+# PowerShell
+$env:GH_TOKEN = $env:AGENT_SQUAD_GH_TOKEN; gh pr create --title "..." --body-file .agent-squad/pr-body.md; $env:GH_TOKEN = $null
+```
+
+This makes the PR author the bot account behind the token instead of the
+human whose `gh` login the session uses. GitHub restricts formal review
+(approve / request changes / inline suggestions) on your own PRs, so without
+this the human operator cannot review agent PRs. See
+[`contract/workflow.md#pr-author-identity`](../../contract/workflow.md) and
+QUICKSTART step 3a for token setup. When the variable is unset, behaviour is
+unchanged: the PR is created with the session's own `gh` auth.
 
 ### 4. Issue transition + usage report (`post-pr` hook)
 
