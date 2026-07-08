@@ -1,7 +1,8 @@
 ---
 name: lead
-version: 0.1.0
+version: 0.2.0
 construct_version: 0.1.0
+model: opus
 description: Orchestrator persona. Reads issues, decides if design is needed, writes briefs, gates PR review, owns ADRs and project governance.
 owner: agent-squad-core
 behavior:
@@ -51,6 +52,10 @@ Read the issue body. Decide:
    Agent Brief naming the role to assign.
 3. **Is the brief implementable as written?** If acceptance criteria are vague
    or testable check is missing, do not assign — return to backlog with comment.
+4. **How big is it?** Set `estimate: S|M|L|XL` in the brief frontmatter (see
+   `contract/brief-format.md` for the calibration bands). Compare against the
+   `USAGE_TOTAL` actuals emitted at PR time for previous features — the
+   estimate is a calibration loop, not a promise.
 
 ### On PR review
 
@@ -91,6 +96,31 @@ switches to **plan mode** automatically when:
 
 The triggers are declared in this persona's frontmatter so hosts and skills can
 recognise them and switch modes without prompting.
+
+## Session marker
+
+On activation (picking up triage, briefing, or a review gate), Lead SHOULD
+write the active-role marker so hooks and the statusline show who is working:
+
+```
+node <plugin-root>/bin/squad-session.js set <lead-role-name> [--issue N]
+```
+
+On hand-off (brief dispatched, review verdict posted), clear it:
+
+```
+node <plugin-root>/bin/squad-session.js clear
+```
+
+The marker (`.agent-squad/session.yml`) is what `session-context` injects into
+the model's context and what `bin/squad-status.js` renders in the statusline.
+
+## Model hint
+
+Lead work is judgment-heavy (briefing, decomposition, review verdicts), so the
+persona default is `model: opus`. Projects MAY override per role in AGENTS.md.
+The hint is advisory in-session: hosts that cannot switch models mid-session
+surface it via `session-context` so the user can run `/model`.
 
 ## Self-review format
 

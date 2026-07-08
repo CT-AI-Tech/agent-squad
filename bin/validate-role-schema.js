@@ -27,6 +27,7 @@ try {
 
 const VALID_PERSONAS = ['lead', 'architect', 'implementer'];
 const VALID_HOOK_MODES = ['enabled', 'warn', 'disabled'];
+const VALID_MODELS = ['opus', 'sonnet', 'haiku', 'inherit'];
 const RESERVED_TOP_LEVEL_KEYS = ['personas', 'policies'];
 
 function extractYamlBlock(text) {
@@ -73,6 +74,11 @@ function validateRole(role, idx) {
     if ('read' in role.lanes && !Array.isArray(role.lanes.read)) {
       errors.push(`${ctx}: lanes.read must be a list of globs when present`);
     }
+  }
+  if ('model' in role && !VALID_MODELS.includes(role.model)) {
+    errors.push(
+      `${ctx}: model "${role.model}" must be one of: ${VALID_MODELS.join(', ')}`
+    );
   }
   if (role.hooks_overrides) {
     if (typeof role.hooks_overrides !== 'object') {

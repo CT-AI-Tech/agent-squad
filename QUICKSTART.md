@@ -29,9 +29,21 @@ This adds the construct's personas, core skills, hooks, and the role schema.
 
 ## 2. Create your project's AGENTS.md
 
-Copy [`examples/AGENTS.md.example`](examples/AGENTS.md.example) to your repo root
-as `AGENTS.md`. This file is **project-owned** — it declares the roles your team
-needs by composing personas + skills + lanes.
+**Recommended:** run the init skill from your project root and review the
+draft it produces:
+
+```bash
+/agent-squad:init
+```
+
+It scans your plan docs and tech stack, composes roles from the template
+library in [`examples/roles/`](examples/roles/), validates the result, and
+scaffolds `.ai-dlc.yml`. The output is a draft — review every role, skill,
+and lane before first use.
+
+**Manual fallback:** copy [`examples/AGENTS.md.example`](examples/AGENTS.md.example)
+to your repo root as `AGENTS.md`. This file is **project-owned** — it declares
+the roles your team needs by composing personas + skills + lanes.
 
 ```yaml
 roles:
@@ -80,7 +92,35 @@ If your project also uses `ai-dlc-board-manager`:
 Without the board manager, the same skills work — you just create issues and
 branches manually.
 
-## 6. Read the contract
+## 6. See who is active
+
+Two mechanisms show which agent (persona + role) is currently working:
+
+- **Automatic context injection** — the `session-context` hook reads
+  `.agent-squad/session.yml` on every prompt and tells the model which persona
+  it is, so the agent announces itself at turn start. No setup needed; disable
+  via `session_context: disabled` in `.ai-dlc.yml`.
+- **Statusline** — add to your project's `.claude/settings.json` (the init
+  skill offers to do this for you):
+
+  ```json
+  {
+    "statusLine": {
+      "type": "command",
+      "command": "node <plugin-root>/bin/squad-status.js"
+    }
+  }
+  ```
+
+  Renders `[agent-squad] implementer:backend-dev #42 (sonnet)` while a session
+  marker exists, and stays empty otherwise.
+
+Lead and Architect sessions write the marker with
+`node <plugin-root>/bin/squad-session.js set <role> [--issue N]` and clear it
+with `... clear` on hand-off (Implementer sessions get it automatically from
+the `pre-implement` hook).
+
+## 7. Read the contract
 
 Before writing your own skill or persona override, read [CONTRACT.md](CONTRACT.md)
 and [`contract/`](contract/). The contract surface is small on purpose; everything
@@ -88,16 +128,25 @@ else is internal and may move.
 
 ## Verifying agent-squad itself
 
-Before pushing changes to agent-squad, run the local CI dry-run from its repo:
+Before pushing changes to agent-squad, run the local CI dry-run from its
+repo. The suite is Node — the same command works in PowerShell, bash, cmd,
+or any shell with `node` on PATH:
 
-```bash
-cd /path/to/agent-squad
-bash tests/ci-dry-run.sh
 ```
+cd /path/to/agent-squad
+node tests/ci-dry-run.js
+```
+
+(`tests/ci-dry-run.ps1` and `tests/ci-dry-run.sh` are thin wrappers around
+the same script, kept for muscle memory.)
 
 This runs the same checks the GitHub workflow runs — manifest validity, hook
 syntax, persona and skill frontmatter, the example AGENTS.md role schema, and
-31 smoke tests across all hooks and validators.
+the full smoke-test suite across all hooks and validators.
+
+Everything that runs at plugin runtime (hooks, `bin/` tools, validators) is
+plain Node with no shell dependency — agent-squad needs no per-OS setup on
+Windows, macOS, or Linux.
 
 ## Troubleshooting
 

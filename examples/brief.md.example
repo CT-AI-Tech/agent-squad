@@ -1,0 +1,24 @@
+---
+issue: 42
+role: backend-dev
+contract: docs/contracts/api-todo.md
+estimate: M
+---
+
+# Brief — STOW-RS upload endpoint
+
+## Context
+
+Users need to upload DICOM studies via STOW-RS. The API contract is locked
+in `docs/contracts/api-todo.md` (merged to main). Work stays inside the
+`backend-dev` lane; frontend consumption is issue 43.
+
+## Acceptance criteria
+
+- POST /studies accepts multipart DICOM per the contract
+- Rejects non-DICOM payloads with 415
+- Stores accepted instances and returns the contract's success shape
+
+## Testable Check
+
+pytest tests/test_stow.py — all cases pass, including the 415 rejection case.

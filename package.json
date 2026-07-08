@@ -1,16 +1,16 @@
 {
   "name": "agent-squad",
-  "version": "0.1.1",
+  "version": "0.4.0",
   "description": "Organisation-wide agent construct: personas, role schema, self-review format, lifecycle hooks.",
   "private": true,
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "test": "bash tests/run.sh",
+    "test": "node tests/run.js",
     "validate:frontmatter": "node bin/validate-frontmatter.js",
     "validate:role-schema": "node bin/validate-role-schema.js",
-    "ci": "bash tests/ci-dry-run.sh"
+    "ci": "node tests/ci-dry-run.js"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

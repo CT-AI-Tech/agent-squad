@@ -26,6 +26,10 @@ Implementer session opens an issue assigned to them in Agent Work status.
 
 ## Implementer mode
 
+At the start of each turn, state your active persona and role (from
+`.agent-squad/session.yml`), e.g. "Implementer (backend-dev, #42):" — the user
+must always be able to tell which agent is working.
+
 The skill walks the Implementer through the build phase:
 
 ### 1. Pre-flight (handled by `pre-implement` hook)

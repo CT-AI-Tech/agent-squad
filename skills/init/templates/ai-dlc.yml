@@ -1,0 +1,21 @@
+# .ai-dlc.yml - agent-squad project configuration (scaffolded by /agent-squad:init)
+# Schema: agent-squad/contract/lifecycle-hooks.md (hooks block)
+#         agent-squad/contract/tool-hooks.md (tool hook mode keys)
+
+construct_version: ">=0.4.0"
+
+hooks:
+  # Lifecycle hooks (fire at workflow stage transitions)
+  pre_implement: enabled       # brief + contract validation before first edit
+  pre_pr: enabled              # self-review block validation before PR opens
+  post_pr: enabled             # board hand-off after PR opens
+
+  # Tool hooks (fire on host tool calls)
+  branch_guard: enabled        # blocks edits on protected branches + lane discipline
+  rebase_guard: enabled        # auto-rebase onto default branch before each commit
+  session_context: enabled     # inject active persona/role into model context
+  usage_tracker: enabled       # record token usage per feature (usage.json)
+
+# Board manager integration (uncomment only if ai-dlc-board-manager is installed)
+# plan_file: ProjectPlan.md
+# github_repo: your-org/your-repo

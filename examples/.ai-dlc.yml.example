@@ -12,6 +12,8 @@ hooks:
   # Built-in hooks from agent-squad
   branch_guard: enabled        # blocks edits on protected branches + lane discipline
   rebase_guard: enabled        # auto-rebase onto default branch before each commit
+  session_context: enabled     # inject active persona/role into model context
+  usage_tracker: enabled       # record token usage per feature (usage.json)
 
   # Project-specific custom hooks
   custom:

@@ -29,6 +29,7 @@ try {
 const VALID_PERSONA_NAMES = ['lead', 'architect', 'implementer'];
 const VALID_AFFINITY = ['implementer', 'architect', 'lead', 'both'];
 const VALID_MODES = ['plan', 'execute'];
+const VALID_MODELS = ['opus', 'sonnet', 'haiku', 'inherit'];
 
 const REQUIRED_PERSONA_FIELDS = [
   'name',
@@ -104,6 +105,9 @@ function validatePersona(fm, filePath) {
   }
   if (fm.plan_mode_triggers !== undefined && !Array.isArray(fm.plan_mode_triggers)) {
     errors.push('plan_mode_triggers must be a list (may be empty)');
+  }
+  if (fm.model !== undefined && !VALID_MODELS.includes(fm.model)) {
+    errors.push(`model "${fm.model}" must be one of: ${VALID_MODELS.join(', ')}`);
   }
   if (fm.behavior && typeof fm.behavior === 'object') {
     for (const f of REQUIRED_PERSONA_BEHAVIOR) {
