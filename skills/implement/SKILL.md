@@ -21,7 +21,7 @@ isn't `implementer`, or if the role isn't defined in the project's `AGENTS.md`.
 
 ## When this skill applies
 
-Auto-triggers when the user invokes `/implement <issue-number>` or when an
+Auto-triggers when the user invokes `/agent-squad:implement <issue-number>` or when an
 Implementer session opens an issue assigned to them in Agent Work status.
 
 ## Implementer mode

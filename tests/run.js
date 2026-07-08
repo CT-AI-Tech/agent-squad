@@ -135,6 +135,11 @@ const repo = initRepo('repo');
   });
   check('branch-guard: allows outside-repo path on main', r.status === 0, 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
 
+  r = runNode(HOOK('branch-guard.js'), {
+    stdin: '{"tool_input":{"file_path":".agent-squad/brief.md"}}', cwd: repo
+  });
+  check('branch-guard: allows .agent-squad/ on main', r.status === 0, 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
   git(['checkout', '-q', 'feature/42-test'], repo);
   r = runNode(HOOK('branch-guard.js'), {
     stdin: '{"tool_input":{"file_path":"seed.txt"}}', cwd: repo
@@ -156,6 +161,11 @@ const repo = initRepo('repo');
   });
   check('branch-guard: blocks file outside lane',
     r.status === 2 && /outside the write lane/.test(r.stdout), 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  r = runNode(HOOK('branch-guard.js'), {
+    stdin: '{"tool_input":{"file_path":".agent-squad/pr-body.md"}}', cwd: repo
+  });
+  check('branch-guard: allows .agent-squad/ despite lanes', r.status === 0, 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
 
   write(path.join(repo, '.ai-dlc.yml'), 'hooks:\n  branch_guard: warn\n');
   r = runNode(HOOK('branch-guard.js'), {

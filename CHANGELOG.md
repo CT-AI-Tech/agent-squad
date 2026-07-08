@@ -4,6 +4,25 @@ All notable changes to `agent-squad` will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning is strict semver on the contract surface defined in [CONTRACT.md](CONTRACT.md).
 
+## [Unreleased]
+
+### Fixed
+- `hooks/branch-guard.js` — writes under `.agent-squad/` are now exempt from
+  both the protected-branch rule and lane discipline. The pre-pr contract
+  directs the implementer to stage the PR body at `.agent-squad/pr-body.md`,
+  but the guard blocked that write because `.agent-squad/` is never in a
+  role's lanes, forcing agents to detour through a temp directory every
+  finish-feature run. The construct's own working state (session marker,
+  `pr-body.md`, usage ledger) is never implementation work. Documented in
+  `contract/tool-hooks.md`; covered by 2 new smoke tests.
+
+### Changed
+- `skills/implement/SKILL.md`, `skills/finish-feature/SKILL.md` — invocation
+  examples now use the plugin-namespaced command form
+  (`/agent-squad:implement`, `/agent-squad:finish-feature`) to match how the
+  skills are exposed when installed as a plugin, consistent with
+  `/agent-squad:init` and QUICKSTART.
+
 ## [0.4.0] — feature economics + cross-platform tests
 
 Second field-feedback release: reviewer test handoff, Lead size estimates,

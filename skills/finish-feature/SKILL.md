@@ -23,7 +23,7 @@ governance PRs manually.
 
 ## When this skill applies
 
-Auto-triggers when the user invokes `/finish-feature` or when the Implementer's
+Auto-triggers when the user invokes `/agent-squad:finish-feature` or when the Implementer's
 testable check is verifiably met.
 
 ## Implementer mode
