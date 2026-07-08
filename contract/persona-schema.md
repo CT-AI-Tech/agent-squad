@@ -20,6 +20,8 @@ default_mode: plan | execute   # required, the persona's starting execution mode
 plan_mode_triggers:            # required (may be empty), conditions that force a switch
   - <string>                   #   to plan mode mid-session if default_mode is execute
 self_review_format: <path>     # required, path to the persona's self-review template
+model: opus | sonnet | haiku | inherit   # optional, suggested model tier for this
+                               #   persona's work (see Model hint below)
 ---
 ```
 
@@ -41,6 +43,19 @@ declare:
 Plan mode is a runtime concern (the host environment provides it; Claude Code
 binds it to `Shift+Tab`). The construct's contribution is declaring **when**
 the switch is appropriate — not implementing the switch itself.
+
+## Model hint (optional)
+
+`model` declares the suggested model tier for the persona's kind of work, using
+the host vocabulary `opus | sonnet | haiku | inherit`. Resolution when a role
+activates: the role-level `model` in the project's AGENTS.md wins, else this
+persona default, else unset. The resolved value is written into the session
+marker (see [tool-hooks.md](tool-hooks.md)).
+
+The hint is **advisory** on hosts that cannot switch the active session's model
+programmatically (Claude Code main sessions — the `session-context` hook
+surfaces the hint so the user can run `/model`). It is **binding** where the
+host supports per-agent model selection (e.g. delegated subagents).
 
 ## Field rules
 

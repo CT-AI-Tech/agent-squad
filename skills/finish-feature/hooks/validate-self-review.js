@@ -110,6 +110,16 @@ function countBullets(sectionText) {
   return (sectionText.match(/^\s*[-*]\s+\S/gm) || []).length;
 }
 
+function countSteps(sectionText) {
+  // Bullets or numbered items ("- x", "* x", "1. x", "1) x")
+  return (sectionText.match(/^\s*(?:[-*]|\d+[.)])\s+\S/gm) || []).length;
+}
+
+function hasCommandLine(sectionText) {
+  // A fenced code block or a "$ "-prefixed shell line counts as a command
+  return /```/.test(sectionText) || /^\s*\$\s+\S/m.test(sectionText);
+}
+
 function extractSection(body, headerRegex) {
   // Find header line, then capture until next header of same or higher level
   const lines = body.split(/\r?\n/);
@@ -157,6 +167,13 @@ function validateImplementer(body, role, diffFiles) {
     if (!/Command run\s*:/i.test(tcv)) errors.push('"### Testable Check verification" missing "Command run:" line');
     if (!/Output/i.test(tcv)) errors.push('"### Testable Check verification" missing "Output" line');
     if (!/Result\s*:/i.test(tcv)) errors.push('"### Testable Check verification" missing "Result:" line');
+  }
+
+  // How to test (reviewer-facing reproduction steps)
+  const howTo = extractSection(body, /^###\s+How to test\b/i);
+  if (howTo === null) errors.push('missing "### How to test" section (reviewer reproduction steps)');
+  else if (countSteps(howTo) < 2 && !hasCommandLine(howTo)) {
+    errors.push('"### How to test" must contain at least 2 steps or 1 command line');
   }
 
   // Files changed

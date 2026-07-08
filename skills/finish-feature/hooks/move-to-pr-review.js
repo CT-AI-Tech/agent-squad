@@ -49,12 +49,40 @@ function archiveSessionMarker() {
   } catch { return false; }
 }
 
+// Sum the usage ledger for an issue. Returns totals object or null.
+function usageTotalsForIssue(issue) {
+  try {
+    const p = path.resolve(process.cwd(), '.agent-squad', 'usage.json');
+    if (!fs.existsSync(p)) return null;
+    const ledger = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const entry = ledger && ledger.issues && ledger.issues[String(issue)];
+    if (!entry || !entry.sessions) return null;
+    const totals = { input: 0, output: 0, cache_read: 0, cache_create: 0 };
+    for (const s of Object.values(entry.sessions)) {
+      if (!s || typeof s !== 'object') continue;
+      totals.input += s.input || 0;
+      totals.output += s.output || 0;
+      totals.cache_read += s.cache_read || 0;
+      totals.cache_create += s.cache_create || 0;
+    }
+    return totals;
+  } catch { return null; }
+}
+
 // ─── main ────────────────────────────────────────────────────────────────
 let payload;
 try { payload = JSON.parse(readStdin() || '{}'); } catch { payload = {}; }
 
 const issue = payload.issue_number || payload.issue || null;
 const prUrl = payload.pr_url || null;
+
+// Read the marker BEFORE archiving it - the estimate rides on it.
+let estimate = null;
+try {
+  const { readSessionMarker } = require(path.join(__dirname, '..', '..', '..', 'hooks', 'lib', 'session-marker.js'));
+  const marker = readSessionMarker();
+  if (marker && marker.estimate) estimate = marker.estimate;
+} catch {}
 
 const archived = archiveSessionMarker();
 
@@ -67,6 +95,17 @@ if (boardWired && issue) {
   console.log('NEXT_STEP move_issue_status issue=' + issue + ' to=pr_review');
 } else if (!boardWired) {
   console.error('[move-to-pr-review] no board-manager configured (.ai-dlc.yml has no github_repo); skipping issue transition.');
+}
+
+if (issue) {
+  const totals = usageTotalsForIssue(issue);
+  if (totals) {
+    let line = 'USAGE_TOTAL issue=' + issue +
+      ' input=' + totals.input + ' output=' + totals.output +
+      ' cache_read=' + totals.cache_read + ' cache_create=' + totals.cache_create;
+    if (estimate) line += ' estimate=' + estimate;
+    console.log(line);
+  }
 }
 
 if (archived) {

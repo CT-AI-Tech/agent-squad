@@ -43,6 +43,12 @@ Output (verbatim, abbreviated only with [...] for length):
     <paste output here>
 Result:         passed | failed | partial — <one-line explanation>
 
+### How to test (required)
+<reviewer-facing reproduction steps: commands to run, URLs to open, what
+to expect. At least 2 steps or 1 command line.>
+1. <e.g. "docker compose up api">
+2. <e.g. "curl -X POST localhost:8000/studies -F file=@fixtures/ct.dcm — expect 200 with study UID">
+
 ### Files changed (required)
 - <file path>: <one-line description of what changed>
 - ...
@@ -68,6 +74,7 @@ The `pre-pr` hook in `finish-feature` rejects the PR if any of these are true:
 | `## Agent Brief` section is present and non-empty | The Testable Check must be pasted, not summarised |
 | `### What I actively checked` contains at least 3 list items | Bullet count ≥ 3 |
 | `### Testable Check verification` contains `Command run:`, `Output`, and `Result:` lines | All three sub-fields present |
+| `### How to test` has reproduction steps | At least 2 list/numbered steps, or at least 1 command line (fenced block or `$ `-prefixed) |
 | `### Files changed` list matches `git diff --name-only` | Every file in the diff appears; no extra files |
 | `### Tests written or updated` is non-empty | Either lists test files or explains absence |
 | `### Issues I found and chose not to fix` header is present | Section header MUST appear even if list is empty |
@@ -150,6 +157,7 @@ to `AGENTS.md`, `.ai-dlc.yml`, or other governance files.
 | `## Agent self-review — <role>` header | all | exact string, role from active-role marker |
 | `### What I actively checked` | implementer | ≥ 3 bullets |
 | `### Testable Check verification` | implementer | command + output + result sub-fields |
+| `### How to test` | implementer | ≥ 2 steps or ≥ 1 command line |
 | `### Files changed` | implementer | matches `git diff --name-only` |
 | `### Tests written or updated` | implementer | non-empty |
 | `### Issues I found and chose not to fix` | implementer | header present |

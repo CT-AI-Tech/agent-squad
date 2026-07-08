@@ -48,15 +48,17 @@ v1.0 the contract locks.
 ## Before any change
 
 1. Read `CONTRACT.md` and the relevant `contract/*.md` files.
-2. Run the local CI dry-run to confirm a green baseline:
+2. Run the local CI dry-run to confirm a green baseline (shell-neutral;
+   works in PowerShell, bash, or via the `tests/*.ps1` / `tests/*.sh`
+   wrappers):
 
-   ```bash
-   npm install            # first time only
-   bash tests/ci-dry-run.sh
+   ```
+   npm install                  # first time only
+   node tests/ci-dry-run.js
    ```
 
 3. Make the change.
-4. Re-run `bash tests/ci-dry-run.sh`. All 31 smoke tests + 7 CI stages must
+4. Re-run `node tests/ci-dry-run.js`. All smoke tests + 7 CI stages must
    pass before you commit.
 5. Update `CHANGELOG.md` under `[Unreleased]` (or in the active version
    section if cutting a release).

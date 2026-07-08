@@ -31,14 +31,14 @@ jobs:
       # ─── Hook script syntax check ──────────────────────────────────────
       - name: Syntax-check construct hooks
         run: |
-          for f in hooks/*.js; do
+          for f in hooks/*.js hooks/lib/*.js bin/*.js; do
             [ -f "$f" ] || continue
             node --check "$f"
           done
 
       - name: Syntax-check skill hooks
         run: |
-          for f in skills/core/*/hooks/*.js; do
+          for f in skills/*/hooks/*.js; do
             [ -f "$f" ] || continue
             node --check "$f"
           done
@@ -50,7 +50,7 @@ jobs:
       # ─── Skill frontmatter validation ───────────────────────────────────
       - name: Validate core skill frontmatter
         run: |
-          for skill in skills/core/*/SKILL.md; do
+          for skill in skills/*/SKILL.md; do
             [ -f "$skill" ] || continue
             node bin/validate-frontmatter.js "$skill"
           done
@@ -68,4 +68,4 @@ jobs:
 
       # ─── Smoke tests for hooks + validators ─────────────────────────────
       - name: Run smoke tests
-        run: bash tests/run.sh
+        run: node tests/run.js

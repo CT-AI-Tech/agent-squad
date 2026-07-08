@@ -4,9 +4,138 @@ All notable changes to `agent-squad` will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning is strict semver on the contract surface defined in [CONTRACT.md](CONTRACT.md).
 
-## [Unreleased]
+## [0.4.0] — feature economics + cross-platform tests
+
+Second field-feedback release: reviewer test handoff, Lead size estimates,
+actual token tracking per feature, and a Windows-first cross-platform test
+harness. Contract changes are additive except the flagged self-review
+tightening.
 
 ### Added
+- `contract/brief-format.md` — formalizes the Agent Brief schema the
+  pre-implement hook has enforced de facto since v0.1 (search order,
+  frontmatter fields, required `## Testable Check` body section), plus the
+  new optional `estimate: S|M|L|XL` frontmatter field with token
+  calibration bands (explicitly bands for comparison against recorded
+  actuals, not promises). `check-brief-and-contract` rejects invalid
+  values and copies valid ones into the session marker (new optional
+  `estimate` field, schema in `contract/tool-hooks.md`).
+  `examples/brief.md.example` added.
+- `hooks/usage-tracker.js` — new `usage-tracker` tool hook (Stop, Claude
+  Code specific). On every Stop with an active marker carrying an issue,
+  recomputes the session's token totals from the transcript and overwrites
+  its entry in the per-issue ledger `.agent-squad/usage.json`
+  (idempotent — repeated Stops never double-count; multiple sessions
+  accumulate per issue). Ledger schema is contract
+  (`contract/tool-hooks.md`); mode key `usage_tracker` in `.ai-dlc.yml`.
+- `USAGE_TOTAL` stdout line from `move-to-pr-review` (post-pr): feature
+  token totals summed across sessions, paired with the brief's `estimate`
+  read from the marker before archival. `finish-feature` documents an
+  optional `### Token usage` PR-body note (estimate vs actual) — not
+  validator-required since the ledger is host-specific.
+- `tests/lib/harness.js`, `tests/run.js`, `tests/ci-dry-run.js` — the
+  smoke-test suite and CI dry-run ported to cross-platform Node (no shell
+  dependency; runs identically from PowerShell, bash, or cmd).
+  `tests/run.ps1` / `tests/ci-dry-run.ps1` PowerShell wrappers added;
+  `tests/run.sh` / `tests/ci-dry-run.sh` rewritten as thin wrappers around
+  the Node scripts. Suite total now 66 passing (up from 55), including new
+  coverage for estimates, the usage ledger, and the How-to-test section.
+
+### Changed
+- **`### How to test` is now a required section in the implementer
+  self-review** (`contract/self-review-format.md`,
+  `validate-self-review.js`): reviewer-facing reproduction steps, at least
+  2 steps or 1 command line. This is a contract tightening tolerated under
+  the 0.x semver policy — adopters must update PR templates.
+- `skills/finish-feature/SKILL.md` — required-section list updated to the
+  actual v0.x section names (it still described the retired v0.1
+  field-style block) and now includes `### How to test`.
+- `personas/lead.md` briefing guidance and `contract/workflow.md` — Lead
+  SHOULD set `estimate:` in the brief and calibrate against `USAGE_TOTAL`
+  actuals.
+- Canonical verification command is now `node tests/ci-dry-run.js`
+  (`CLAUDE.md`, `QUICKSTART.md`); `plugin-ci.yml` smoke step switched to
+  `node tests/run.js`; `package.json` scripts updated and version aligned
+  to the plugin version. QUICKSTART states the runtime layer is plain Node
+  with no per-OS setup.
+
+### Fixed
+- `.gitignore` now also ignores `.agent-squad/session.*.yml` (archived
+  markers escaped the existing `session.yml` ignore) and the new
+  `.agent-squad/usage.json`.
+
+## [0.3.0] — persona visibility, model hints, init skill
+
+Field feedback release (from first real adoption, fhir-validator): make the
+active agent visible, let roles hint their model tier, and automate adoption.
+All contract changes are additive (minor bump).
+
+### Added
+- `hooks/session-context.js` — new `session-context` tool hook
+  (UserPromptSubmit, SessionStart). Injects a one-line description of the
+  active role (persona, role, issue, model hint) into the model's context so
+  the agent always knows and announces which persona it is operating as.
+  Informational only, never blocks. Mode key `session_context` in
+  `.ai-dlc.yml`. Registered in `hooks/hooks.json`; documented as contract in
+  `contract/tool-hooks.md`.
+- `bin/squad-status.js` — statusline helper rendering the active role
+  (`[agent-squad] implementer:backend-dev #42 (sonnet)`) from the session
+  marker; silent when no marker exists. Wiring snippet in QUICKSTART; the
+  init skill offers to wire it into project `.claude/settings.json`.
+- `bin/squad-session.js` — session marker CLI (`set <role> [--issue N]` /
+  `clear`) so Lead and Architect flows can hold the active-role marker too.
+  Previously only the implementer flow (pre-implement hook) ever wrote it.
+  Marker-write semantics documented as contract in `contract/tool-hooks.md`;
+  lead/architect persona bodies now instruct when to set/clear.
+- `hooks/lib/session-marker.js` — shared dependency-free marker/config
+  parser extracted from `branch-guard.js`, consumed by `branch-guard`,
+  `session-context`, and `squad-status`.
+- Optional `model` field (`opus | sonnet | haiku | inherit`): persona
+  frontmatter default (`contract/persona-schema.md`) with per-role override
+  in the role schema (`contract/role-schema.md`); precedence role > persona
+  > unset. Resolved into the session marker (`model` field, schema in
+  `contract/tool-hooks.md`) by the pre-implement hook and `squad-session`,
+  surfaced by `session-context` and the statusline. Advisory in-session
+  (the context line suggests `/model <hint>` on mismatch); binding where the
+  host supports per-agent models. Persona defaults: lead/architect `opus`,
+  implementer `sonnet`. Both validators enforce the enum.
+- `skills/init/SKILL.md` — new core skill `/agent-squad:init`
+  (persona_affinity: lead). Scans a consumer project's plan docs and tech
+  manifests, composes a draft `AGENTS.md` from `examples/roles/` fragments,
+  validate-loops it with `bin/validate-role-schema.js`, scaffolds
+  `.ai-dlc.yml` from `skills/init/templates/ai-dlc.yml`, and offers
+  statusline wiring. Never overwrites an existing `AGENTS.md`, never creates
+  plan docs (board-manager's `spec-to-plan` owns that).
+- `tests/run.sh` — four new sections (model hint validation, squad-session /
+  squad-status / session-context, check-brief model resolution, init skill
+  artifacts). Suite total now 55 passing (up from 38).
+
+### Changed
+- `personas/*.md` bumped to 0.2.0: `model` frontmatter defaults added;
+  lead/architect gained "Session marker" and "Model hint" body sections.
+- `skills/implement/SKILL.md`, `skills/finish-feature/SKILL.md` — instruct
+  the agent to state its active persona and role at turn start
+  (belt-and-braces with the `session-context` hook).
+- `hooks/branch-guard.js` — internal refactor to the shared marker lib; no
+  behaviour change (existing smoke tests unchanged and green).
+- `QUICKSTART.md` — `/agent-squad:init` is now the recommended adoption
+  path; new "See who is active" section covering context injection and the
+  statusline.
+- `examples/roles/README.md` — the "Scripted" section referenced a
+  `bin/scaffold-role.js` that was never shipped; repointed to the init
+  skill. Fragment format documented as load-bearing (init consumes it).
+- `examples/AGENTS.md.example`, `examples/roles/backend-dev.role.md`,
+  `examples/.ai-dlc.yml.example` — commented `model:` examples and the
+  `session_context` mode key.
+
+### Fixed
+- `tests/ci-dry-run.sh` and `.github/workflows/plugin-ci.yml` still globbed
+  `skills/core/*` (dead since the flatten in `14a58ad`), so `implement` and
+  `finish-feature` hook syntax and SKILL.md frontmatter were silently
+  skipped in CI. Globs updated to `skills/*/...`; stage 3 now also
+  syntax-checks `hooks/lib/*.js` and `bin/*.js`.
+
+### Added (pre-0.3.0 unreleased work, shipped here)
 - `examples/roles/` — starter library of single-role fragment templates,
   one per file: `lead`, `cloud-architect`, `backend-dev`, `frontend-dev`,
   `devops-engineer`. Each `*.role.md` is a copy-paste-ready yaml entry
@@ -30,13 +159,13 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
   into the existing `validate-frontmatter` section. Suite total now 38
   passing (up from 32).
 
-### Changed
+### Changed (pre-0.3.0 unreleased work, shipped here)
 - `examples/AGENTS.md.example` — added a "See also" pointer to
   `examples/roles/` so adopters who only need a couple of roles can
   start from the smaller fragments instead of copying the full project
   example.
 
-### Fixed
+### Fixed (pre-0.3.0 unreleased work, shipped here)
 - `hooks/branch-guard.js` now bails with exit `0` when the `file_path`
   argument resolves outside the repo root, *before* the protected-branch
   check. Previously, writes to any path on a protected branch were

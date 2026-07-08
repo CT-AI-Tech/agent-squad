@@ -21,6 +21,8 @@ roles:
       write: [<glob>, ...]          # required, files this role may modify
       read:  [<glob>, ...]          # optional, files this role explicitly may read
                                     # (defaults to "everything readable")
+    model: opus | sonnet | haiku | inherit   # optional, overrides the persona's
+                                    #   default model hint for this role
     hooks_overrides:                # optional, per-role hook overrides
       pre-implement: enabled | warn | disabled
       ...
@@ -58,6 +60,15 @@ contract_first:                     # optional, project-level contract-first con
 - Optional. If present, restricts reads to listed globs.
 - Most projects omit this — Implementers and Architects routinely read across
   the repo to understand context. Restrict only if you have a specific reason.
+
+### `model`
+- Optional. One of `opus | sonnet | haiku | inherit` (host vocabulary).
+- Overrides the persona's frontmatter `model` default for this role.
+  Precedence: role `model` > persona `model` > unset.
+- The resolved value is written into the session marker (`model` field, see
+  [tool-hooks.md](tool-hooks.md)) and surfaced by `session-context` and the
+  statusline. Advisory on hosts without per-agent model switching; binding
+  where the host supports it.
 
 ### `hooks_overrides`
 - Per-role override of the project's `.ai-dlc.yml` hook config.

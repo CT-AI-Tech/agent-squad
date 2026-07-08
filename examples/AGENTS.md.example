@@ -25,6 +25,7 @@ roles:
     alias: Pradhan
     persona: lead
     skills: []
+    # model: opus   # optional override; persona default already opus
     lanes:
       write: [docs/adr/, AGENTS.md, .ai-dlc.yml, ProjectPlan.md]
       read:  []   # default = everything
@@ -61,6 +62,7 @@ roles:
     alias: Mula-lekhaka
     persona: implementer
     skills: [python, fastapi, postgres]
+    # model: sonnet   # optional; role model > persona model > unset
     lanes:
       write: [app/api/, app/services/, app/tasks/, app/schemas/, tests/]
       read:  [docs/contracts/, docs/architecture/]

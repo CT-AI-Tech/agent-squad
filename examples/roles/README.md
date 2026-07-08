@@ -28,14 +28,15 @@ validate in isolation).
    directory layout.
 4. Validate with `node bin/validate-role-schema.js path/to/your/AGENTS.md`.
 
-### Scripted (v0.2.0+)
+### Via the init skill (v0.3.0+)
 
-`bin/scaffold-role.js` reads this directory and merges selected templates
-into an `AGENTS.md`. Example:
+`/agent-squad:init` scans a project's plan docs and tech stack, then composes
+a draft `AGENTS.md` from the fragments in this directory and validates it.
+See [`skills/init/SKILL.md`](../../skills/init/SKILL.md).
 
-```powershell
-node bin/scaffold-role.js --roles lead,backend-dev,cloud-architect --out ./AGENTS.md
-```
+Because init consumes these fragments programmatically, the fragment format
+(a single yaml `roles:`-list entry inside a fenced block, plus prose sections)
+is load-bearing — keep new templates in the same shape.
 
 ## Adding new role templates
 

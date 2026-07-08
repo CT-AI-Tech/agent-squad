@@ -9,6 +9,7 @@ stacks. The Implementer consumes a locked API contract from
 - name: backend-dev
   persona: implementer
   skills: [python, fastapi, postgres]
+  # model: sonnet   # optional model hint; role > persona default > unset
   lanes:
     write:
       - app/api/

@@ -87,6 +87,16 @@ function defaultBranch() {
   return 'main';
 }
 
+const MODEL_VALUES = ['opus', 'sonnet', 'haiku', 'inherit'];
+
+function personaDefaultModel(persona) {
+  const p = path.resolve(__dirname, '..', '..', '..', 'personas', persona + '.md');
+  if (!fs.existsSync(p)) return null;
+  const fm = parseFrontmatter(fs.readFileSync(p, 'utf8'));
+  if (fm && fm.model && MODEL_VALUES.includes(fm.model)) return fm.model;
+  return null;
+}
+
 // ─── main ────────────────────────────────────────────────────────────────
 let payload;
 try { payload = JSON.parse(readStdin() || '{}'); }
@@ -125,6 +135,20 @@ if (!testableCheck) {
   process.exit(1);
 }
 
+// 1b. Estimate (if present) must be a valid size class
+const VALID_ESTIMATES = ['S', 'M', 'L', 'XL'];
+let estimate = null;
+if (briefFm.estimate !== undefined && briefFm.estimate !== null) {
+  estimate = String(briefFm.estimate).trim().toUpperCase();
+  if (!VALID_ESTIMATES.includes(estimate)) {
+    console.log(
+      'pre-implement hook: brief at ' + briefPath + ' has invalid estimate "' + briefFm.estimate + '". ' +
+      'Valid values: ' + VALID_ESTIMATES.join(', ') + ' (see contract/brief-format.md).'
+    );
+    process.exit(1);
+  }
+}
+
 // 2. Contract (if flagged) must exist in default branch
 if (briefFm.contract) {
   const branchToCheck = defaultBranch();
@@ -156,6 +180,11 @@ if (resolved.persona !== 'implementer') {
 }
 
 // 4. Write session marker
+// Model hint: role-level override wins, else the persona frontmatter default.
+const model = (resolved.model && MODEL_VALUES.includes(resolved.model))
+  ? resolved.model
+  : personaDefaultModel(resolved.persona);
+
 const marker = {
   construct_version: payload.construct_version || '0.1.0',
   role: resolved.name,
@@ -165,6 +194,8 @@ const marker = {
   write_lanes: (resolved.lanes && resolved.lanes.write) || [],
   read_lanes: (resolved.lanes && resolved.lanes.read) || []
 };
+if (model) marker.model = model;
+if (estimate) marker.estimate = estimate;
 
 const markerDir = path.resolve(process.cwd(), '.agent-squad');
 if (!fs.existsSync(markerDir)) fs.mkdirSync(markerDir, { recursive: true });

@@ -65,7 +65,9 @@ skip stages or invert the order.
    - Map sub-issues to roles defined in project's `AGENTS.md`.
 
 **Outputs:**
-- Agent Brief written into each (sub-)issue body in the project's brief format.
+- Agent Brief written into each (sub-)issue body in the construct's brief
+  format ([`brief-format.md`](brief-format.md)); the brief SHOULD carry an
+  `estimate:` size class for calibration against recorded actuals.
 - Sub-issues created and linked.
 - Issue assignments set.
 

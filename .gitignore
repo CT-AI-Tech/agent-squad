@@ -13,3 +13,5 @@ build/
 *.swo
 .ai-dlc.local.yml
 .agent-squad/session.yml
+.agent-squad/session.*.yml
+.agent-squad/usage.json
