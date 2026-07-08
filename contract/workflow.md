@@ -127,8 +127,39 @@ skip stages or invert the order.
 
 **Outputs:**
 - Feature branch with code + tests.
-- PR with self-review.
+- PR with self-review (opened under the bot identity when
+  `AGENT_SQUAD_GH_TOKEN` is set — see [PR author identity](#pr-author-identity)).
 - Issue in PR Review status.
+
+---
+
+## PR author identity
+
+GitHub does not allow an account to submit a formal review (approve, request
+changes, batched inline suggestions) on a PR that account opened. When
+`finish-feature` creates PRs with the human operator's own `gh` login, the
+operator is locked out of the review UI on every agent PR.
+
+To fix this, the construct defines one optional environment variable:
+
+| Variable | Meaning |
+|---|---|
+| `AGENT_SQUAD_GH_TOKEN` | GitHub token for a dedicated bot/machine account. When set, `finish-feature` passes it as `GH_TOKEN` to the `gh pr create` invocation **only**. Commits and pushes keep the session's normal credentials. When unset, PR creation uses the session's own `gh` auth (pre-0.5.0 behaviour). |
+
+Rules:
+
+- The variable name and its scope (PR creation only) are contract surface.
+  Renaming or repurposing it is a major bump.
+- One bot identity serves the whole squad. Per-persona attribution stays in
+  commit metadata, not in separate accounts.
+- The token MUST NOT be committed to the repository. Recommended storage is
+  the operator's user environment or an untracked local settings file (see
+  QUICKSTART step 3a).
+
+With the bot as PR author, Stage 4's review gate gains teeth: the human
+operator can approve, request changes, and leave inline suggestions, and a
+branch-protection rule requiring one approval cannot be satisfied by the
+account that opened the PR.
 
 ---
 
@@ -141,7 +172,9 @@ skip stages or invert the order.
 2. Verify files changed match the role's write lane (`branch-guard` already
    enforces this on commit, but Lead double-checks at the PR level).
 3. Verify testable check is met (run it if non-trivial).
-4. Approve or request changes.
+4. Approve or request changes. (Formal review requires the PR author to be a
+   different account than the reviewer — see
+   [PR author identity](#pr-author-identity).)
 5. Merge in dependency order (e.g. schema PR before backend PR before frontend PR).
 6. Close issue.
 

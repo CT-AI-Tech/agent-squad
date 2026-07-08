@@ -63,6 +63,68 @@ If you use the board manager or want hook control, copy
 [`examples/.ai-dlc.yml.example`](examples/.ai-dlc.yml.example) and edit. Each
 hook can be `enabled` (default), `warn`, or `disabled`.
 
+## 3a. (Optional, recommended) Give the squad its own GitHub identity
+
+By default `finish-feature` opens PRs with *your* `gh` login — and GitHub
+won't let you formally review your own PRs (no approve, no request-changes,
+no batched inline suggestions). Giving the squad a bot identity fixes that:
+the bot opens the PR, you review it like any teammate's work.
+
+You need **one** bot account for the whole squad — not one per persona.
+Persona attribution lives in commit metadata; the bot only answers "who
+opened the PR".
+
+**Create the bot account and token (about 10 minutes, once):**
+
+1. Sign up a new GitHub account for the bot, e.g. `yourorg-agent-bot`.
+   GitHub's Terms of Service allow one free machine account per human user.
+2. From your own account, invite the bot as a **collaborator with Write
+   access** on the project repo (Settings > Collaborators). Accept the
+   invite as the bot.
+3. Logged in **as the bot**, create a fine-grained personal access token:
+   Settings > Developer settings > Personal access tokens > Fine-grained
+   tokens > Generate new token.
+   - **Repository access:** only the project repo.
+   - **Permissions:** Pull requests: Read and write. Contents: Read-only.
+   - Set an expiry you can live with and note the renewal date.
+4. Copy the token — you'll only see it once.
+
+**Where to add the token** (pick one; never commit it to the repo):
+
+- *User environment variable* — survives every session:
+
+  ```powershell
+  # PowerShell (Windows) - persists for your user account
+  [Environment]::SetEnvironmentVariable('AGENT_SQUAD_GH_TOKEN', '<paste-token-here>', 'User')
+  ```
+
+  ```bash
+  # bash/zsh - add to ~/.bashrc or ~/.zshrc
+  export AGENT_SQUAD_GH_TOKEN='<paste-token-here>'
+  ```
+
+  Restart your terminal (and Claude Code) after setting it.
+
+- *Claude Code local settings* — per-project, untracked by git:
+
+  ```json
+  // .claude/settings.local.json in your project repo
+  {
+    "env": {
+      "AGENT_SQUAD_GH_TOKEN": "<paste-token-here>"
+    }
+  }
+  ```
+
+That's it. When the variable is set, `finish-feature` passes it as
+`GH_TOKEN` to `gh pr create` only — commits and pushes still use your normal
+credentials, so nothing else about your git setup changes. When it's unset,
+PRs are opened with your own login as before.
+
+**Worth doing at the same time:** turn on branch protection for `main`
+requiring one approving review. The bot can't approve its own PRs, so the
+rule now genuinely means a human (you) signed off.
+
 ## 4. Pick the skills your project needs
 
 Skills live in `agent-squad/skills/domain/`. Reference them by name in your roles.
@@ -161,6 +223,11 @@ Windows, macOS, or Linux.
 - *Self-review block rejected on PR* — `finish-feature` invokes
   `validate-self-review` which enforces the per-persona format. Read the rejection
   message — it points at the failing section. See [`contract/self-review-format.md`](contract/self-review-format.md).
+- *Can't approve or request changes on an agent PR* — the PR was opened with
+  your own GitHub login, and GitHub blocks formal review on your own PRs. Set
+  up the bot identity (`AGENT_SQUAD_GH_TOKEN`, step 3a) so `finish-feature`
+  opens PRs as the bot. PRs opened before the change stay locked — close and
+  re-open them as the bot if you need to review them formally.
 - *Session marker not found* — the `pre-implement` hook
   (`check-brief-and-contract`) writes `.agent-squad/session.yml` after validating
   the brief. If the marker is missing, the brief is missing, has no testable
