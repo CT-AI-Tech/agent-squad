@@ -58,9 +58,13 @@ ledger in [`tool-hooks.md`](tool-hooks.md)) — not promises:
 
 When the `pre-implement` hook accepts a brief with an `estimate`, it copies
 the normalized value into the session marker (`.agent-squad/session.yml`,
-field `estimate`). At PR time, `move-to-pr-review` emits a `USAGE_TOTAL`
-line pairing the estimate with actual token usage from the ledger, so Lead
-estimates improve with every shipped feature.
+field `estimate`). In orchestrated dispatch, where agents set the marker via
+the `squad-session` CLI rather than through the `pre-implement` hook, the Lead
+passes the same value with `squad-session set --estimate <band>` (see
+[`orchestration.md`](orchestration.md)). Either way, at PR time
+`move-to-pr-review` emits a `USAGE_TOTAL` line pairing the estimate with
+actual token usage from the ledger, so Lead estimates improve with every
+shipped feature.
 
 ## Example
 

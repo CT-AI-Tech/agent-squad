@@ -6,6 +6,55 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.8.1] — dispatch token note: estimate on the marker + subagent actuals
+
+Field-trial regression, both halves of the PR-time `### Token usage` note.
+
+Once work moved to single-session `orchestrate` dispatch, the Lead and its
+spawned agents write the session marker via `squad-session set` instead of
+going through `/agent-squad:implement`. Only the `implement` skill's
+`pre-implement` hook (`check-brief-and-contract`) ever copied the brief's
+`estimate` onto the marker, so in dispatch mode `marker.estimate` was always
+absent. `move-to-pr-review` then emitted `USAGE_TOTAL` with no `estimate=`,
+and the note lost its estimate half — the "token estimation vanished" symptom.
+
+The actuals half was also wrong in dispatch mode: `usage-tracker` parsed only
+the main session transcript, but Claude Code writes each spawned subagent's
+turns to a sibling `<session>/subagents/<agent-id>.jsonl` that the hook never
+read. Since the squad agents do the bulk of the work, the recorded "actual"
+collapsed to just the orchestrator's own dispatch overhead.
+
+### Added (contract — minor bump)
+- `bin/squad-session.js` — `set` accepts `--estimate S|M|L|XL` (case-insensitive
+  input, stored uppercase; invalid values exit `1`), putting the brief's size
+  class on the marker in dispatch mode. When the flag is omitted, `set`
+  preserves any estimate already on the marker, so sequential dispatch
+  switching roles per task does not drop it.
+- `hooks/usage-tracker.js` — on `Stop`, also sums every spawned-subagent
+  transcript under `<session>/subagents/<agent-id>.jsonl`, recording each as
+  its own `sessions.<agent-id>` ledger entry (overwritten per Stop, so it
+  stays idempotent). `move-to-pr-review`'s sum-over-sessions already rolls
+  these into the `USAGE_TOTAL` actuals with no change on its side.
+- `contract/tool-hooks.md` — `--estimate` documented in the CLI semantics and
+  the `estimate` marker-field note; the usage-ledger semantics now cover
+  subagent transcripts, and the ledger `<key>` may be a session or subagent
+  id. `contract/orchestration.md` and `contract/brief-format.md` state that
+  dispatch carries the estimate via the CLI rather than the `pre-implement`
+  hook.
+
+### Changed
+- `skills/orchestrate/SKILL.md` (0.2.1) — the subagent marker-set command now
+  passes `--estimate <brief-estimate>`, with a note that it comes from the
+  task brief frontmatter and is omitted when the brief has none.
+
+### Tests
+- `tests/run.js` — estimate coverage in both the js-yaml and fallback
+  squad-session sections: `--estimate` records and normalizes the value,
+  `get estimate` reads it back, a role switch without the flag preserves it,
+  and an invalid value exits `1`. New usage-tracker check: spawned-subagent
+  transcripts under `<session>/subagents/` are summed into per-agent ledger
+  entries.
+
 ## [0.8.0] — squad-session works without js-yaml; `get` subcommand
 
 Third field-trial fix. In the fhir-query-validator-factory trial the shipped

@@ -494,6 +494,27 @@ section('squad-session / squad-status / session-context');
   check('squad-session: rejects unknown role',
     r.status === 1 && /not found/.test(r.stdout + r.stderr), r.stdout + r.stderr);
 
+  // --estimate carries the brief size class onto the marker (dispatch flow).
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'backend-dev', '--issue', '7', '--estimate', 'm'], cwd: proj2 });
+  const mEst = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
+  check('squad-session: set records --estimate (normalized to upper)',
+    r.status === 0 && /estimate: M/.test(mEst), r.stdout + r.stderr + '\n' + mEst);
+
+  r = runNode(BIN('squad-session.js'), { args: ['get', 'estimate'], cwd: proj2 });
+  check('squad-session: get estimate returns the value',
+    r.status === 0 && r.stdout.trim() === 'M', 'out=' + r.stdout + r.stderr);
+
+  // Switching roles without --estimate must not drop the size class.
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'lead'], cwd: proj2 });
+  const mEst2 = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
+  check('squad-session: role switch without --estimate preserves estimate',
+    r.status === 0 && /persona: lead/.test(mEst2) && /estimate: M/.test(mEst2),
+    r.stdout + r.stderr + '\n' + mEst2);
+
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'backend-dev', '--estimate', 'XXL'], cwd: proj2 });
+  check('squad-session: rejects invalid --estimate',
+    r.status === 1 && /invalid estimate/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+
   r = runNode(BIN('squad-session.js'), { args: ['clear'], cwd: proj2 });
   check('squad-session: clear removes marker',
     r.status === 0 && !fs.existsSync(path.join(proj2, '.agent-squad', 'session.yml')),
@@ -534,6 +555,16 @@ section('squad-session js-yaml fallback');
   try { got = JSON.parse(r.stdout); } catch { got = null; }
   check('get: also works with js-yaml present',
     r.status === 0 && got && got.role === 'backend-dev', 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  // --estimate rides the no-js-yaml fallback path too.
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'backend-dev', '--issue', '9', '--estimate', 'L'], cwd: proj2, env: NOYAML });
+  const fmEst = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
+  check('fallback set: records --estimate',
+    r.status === 0 && /estimate: L/.test(fmEst), 'exit=' + r.status + ' out=' + r.stdout + r.stderr + '\n' + fmEst);
+
+  r = runNode(BIN('squad-session.js'), { args: ['get', 'estimate'], cwd: proj2, env: NOYAML });
+  check('fallback get estimate: returns the value',
+    r.status === 0 && r.stdout.trim() === 'L', 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
 
   r = runNode(BIN('squad-session.js'), { args: ['set', 'lead'], cwd: proj2, env: NOYAML });
   const fm2 = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
@@ -659,6 +690,26 @@ section('usage-tracker');
   const sessions2 = Object.keys((ledger.issues['42'] || {}).sessions || {});
   check('usage-tracker: second session accumulates',
     sessions2.length === 2 && ledger.issues['42'].sessions.s2.input === 300,
+    JSON.stringify(ledger));
+
+  // Spawned-subagent transcripts live under <session>/subagents/ and must be
+  // summed too, or orchestrated-dispatch feature totals miss the squad (the
+  // agents that did the bulk of the work).
+  const orchT = path.join(SCRATCH, 'sess-orch.jsonl');
+  write(orchT, JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  const orchSubDir = path.join(SCRATCH, 'sess-orch', 'subagents');
+  write(path.join(orchSubDir, 'agent-aaa.jsonl'), JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 1000, output_tokens: 700, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  write(path.join(orchSubDir, 'agent-bbb.jsonl'), JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 2000, output_tokens: 300, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  r = runNode(UT, { stdin: JSON.stringify({ session_id: 'orch', transcript_path: orchT }), cwd: proj4 });
+  ledger = JSON.parse(read(ledgerPath) || '{}');
+  const os = (ledger.issues['42'] || {}).sessions || {};
+  check('usage-tracker: sums spawned-subagent transcripts',
+    r.status === 0 && os.orch && os.orch.output === 5 &&
+    os['agent-aaa'] && os['agent-aaa'].output === 700 &&
+    os['agent-bbb'] && os['agent-bbb'].input === 2000,
     JSON.stringify(ledger));
 
   const proj5 = path.join(SCRATCH, 'proj5');

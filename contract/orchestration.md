@@ -213,7 +213,11 @@ Every spawned agent receives, in its instructions:
 Every spawned agent MUST:
 
 - Set the session marker for its role before the first edit
-  (`node <plugin-root>/bin/squad-session.js set <role> --issue <n>`).
+  (`node <plugin-root>/bin/squad-session.js set <role> --issue <n>`), passing
+  `--estimate <S|M|L|XL>` from the brief frontmatter when present so the
+  PR-time token note can compare the estimate with recorded actuals. In
+  dispatch mode this CLI, not the `pre-implement` hook, is what carries the
+  estimate onto the marker.
 - Work only inside its lane and its assigned working directory.
 - Run the brief's testable check before returning.
 - Produce the self-review block per [self-review-format.md](self-review-format.md).

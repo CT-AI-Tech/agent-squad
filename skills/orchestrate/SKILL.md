@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-version: 0.2.0
+version: 0.2.1
 construct_version: ">=0.1.0"
 description: The Lead's dispatch loop. Reads a ticket, decomposes into tasks, hands each to a named squad agent (visible handoff blocks + live squad board), runs them sequentially on one branch or in parallel via git worktrees, gates every return.
 persona_affinity: [lead]
@@ -116,7 +116,7 @@ Brief: read <abs brief path> first. Contract (if listed there) is already in
 main — read it and do not change it.
 
 Before your first edit:
-  node <plugin-root>/bin/squad-session.js set <role-name> --issue <issue>
+  node <plugin-root>/bin/squad-session.js set <role-name> --issue <issue> --estimate <brief-estimate>
 
 Then: implement per the brief, write tests for the testable check, run them,
 commit at logical checkpoints.
@@ -133,6 +133,13 @@ Files changed: <list>
 Halt instead of improvising if the brief is ambiguous, your lane is too
 narrow, or the contract is wrong. Never merge, never close issues.
 ```
+
+`<brief-estimate>` is the `estimate:` value (S|M|L|XL) from this task's brief
+frontmatter. Passing it puts the size class on the session marker so
+`finish-feature`'s PR-time token note pairs the estimate with the recorded
+actuals (the estimate calibration loop). Omit the `--estimate` flag when the
+brief carries no estimate — the marker just goes without one, exactly as
+`finish-feature` already tolerates.
 
 **Collect and gate.** As each agent returns:
 1. Render its **Return block**.
