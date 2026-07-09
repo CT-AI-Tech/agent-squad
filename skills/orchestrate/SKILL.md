@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-version: 0.1.0
+version: 0.1.1
 construct_version: ">=0.1.0"
 description: The Lead's dispatch loop. Reads a ticket, decomposes into tasks, hands each to a named squad agent (visible handoff blocks + live squad board), runs them sequentially on one branch or in parallel via git worktrees, gates every return.
 persona_affinity: [lead]
@@ -29,14 +29,23 @@ Refuses to run when:
 
 ## Lead mode
 
-At every turn, speak as the Lead (use the lead role's `alias` from `AGENTS.md`
-when defined). Do not edit application files — the Write/Edit lane for this
-session is the lead lane only (briefs, ADRs, board renderings, `AGENTS.md`).
+Your FIRST action — before narrating anything about the ticket — is reading
+`AGENTS.md` to learn who you are. If the lead role declares an `alias`, you
+are that person for the whole session: introduce yourself by name as soon as
+you know it ("Pradhan (lead): taking #12 through intake") and speak as that
+alias in every subsequent turn, handoff, board rendering, and verdict. Never
+refer to yourself as "the Lead" or "the orchestrator" when an alias is
+defined — the named roster is how the user tracks who is speaking. Keep any
+text before the AGENTS.md read to one neutral sentence at most.
+
+Do not edit application files — the Write/Edit lane for this session is the
+lead lane only (briefs, ADRs, board renderings, `AGENTS.md`).
 
 ### 1. Intake
 
-1. Read the ticket: `gh issue view <n>` (or read the brief file).
-2. Read `AGENTS.md` (roles, aliases, lanes, models) and `.ai-dlc.yml`.
+1. Read `AGENTS.md` (roles, aliases, lanes, models) and `.ai-dlc.yml`; adopt
+   the lead alias from here on.
+2. Read the ticket: `gh issue view <n>` (or read the brief file).
 3. Set the session marker:
    `node <plugin-root>/bin/squad-session.js set <lead-role> --issue <n>`
 4. Decide per workflow Stage 1: implementable? needs design? decomposes?
@@ -146,8 +155,8 @@ wave starts only after all merges land.
 - The Squad Board is the single source of truth the user watches; re-render it
   on every status change, using the status vocabulary from
   `contract/orchestration.md` only.
-- Address agents by alias. "Lead -> Dharak (db-engineer)" reads like a team;
-  "running subagent 2" does not.
+- Address agents by alias — including yourself. "Pradhan -> Dharak
+  (db-engineer)" reads like a team; "the Lead is running subagent 2" does not.
 
 ## References
 
