@@ -6,6 +6,32 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+### Added
+- `contract/orchestration.md` — single-session squad dispatch protocol
+  (contract surface, referenced as CONTRACT.md section 9). The Lead persona
+  runs the whole Lead -> Architect -> Implementer -> review workflow in one
+  session, handing each task to a spawned agent like a tech lead assigning
+  tickets. Defines: the dispatch loop, the task status vocabulary, four
+  mandatory rendering blocks (Ticket Intake, Squad Board, Handoff, Return) so
+  every assignment is visible in the transcript, wave-construction rules
+  (disjoint lanes + no dependency edge + contract in main => parallel), and
+  the branch/PR policy — fully sequential plan = one branch + one PR; any
+  parallel wave = git worktree + branch + PR per task, merged by Lead in
+  dependency order.
+- `skills/orchestrate/SKILL.md` (0.1.0, `persona_affinity: [lead]`) — the
+  Lead's dispatch runbook implementing the protocol on Claude Code:
+  `/agent-squad:orchestrate <issue>` decomposes the ticket, spawns one
+  subagent per task (Agent tool, labelled `<alias> (<role>): <task>`),
+  switches the session marker per task in sequential mode, creates
+  `.worktrees/<issue>-<task-slug>` per task in parallel mode, and gates every
+  return before merge.
+- `contract/workflow.md` — new "Orchestrated execution (single session)"
+  section: orchestration changes where the stages run, never the stage order
+  or the hard rules.
+- `personas/lead.md` bumped to 0.3.0 — dispatcher behaviour added
+  (orchestrated dispatch section, spawned-agent rows in the hand-off
+  contract, new invoked_when/outputs entries).
+
 ## [0.5.0] — reviewable agent PRs (bot identity)
 
 Enables the human operator to formally review agent PRs. GitHub blocks

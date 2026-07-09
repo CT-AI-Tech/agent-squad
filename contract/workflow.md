@@ -203,6 +203,16 @@ and SHOULD switch back to plan mode mid-session when any of the persona's
 `plan_mode_triggers` are observed. The triggers list is part of the persona
 contract — see [`personas/`](../personas/).
 
+## Orchestrated execution (single session)
+
+All four stages MAY execute inside one host session, with the Lead persona
+dispatching each stage's work to spawned agents — see
+[`orchestration.md`](orchestration.md). Orchestration MUST preserve the stage
+order and every hard rule above (contract-before-implementation, lane
+discipline, self-review, Lead merge gate); it changes only *where* the stages
+run, not *what* they guarantee. The parallel-execution conditions of Stage 3
+map directly onto orchestration's wave-construction rules.
+
 ## Re-entry conditions
 
 Workflow re-enters earlier stages in these cases:

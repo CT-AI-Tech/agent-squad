@@ -70,6 +70,17 @@ The Lead → Architect → Implementer handoff sequence in
 [`contract/workflow.md`](contract/workflow.md) is part of the contract. Skills
 MAY refine the flow but MUST NOT skip stages.
 
+## 9. Orchestration
+
+The single-session dispatch protocol in
+[`contract/orchestration.md`](contract/orchestration.md) is part of the
+contract: the dispatch loop, the task status vocabulary, the four rendering
+blocks (Ticket Intake, Squad Board, Handoff, Return) and their required
+fields, the wave-construction rules, and the branch/PR policy (fully
+sequential plan = one branch + one PR; any parallel wave = worktree + branch +
+PR per task). Renaming a block or a status, or changing the branch/PR policy,
+is a major bump. Adding optional fields to a block is a minor bump.
+
 ---
 
 ## What is *not* contract
