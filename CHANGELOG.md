@@ -6,6 +6,40 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.7.0] — synchronous dispatch, lost-agent recovery, board mirroring
+
+Second field-trial fix. In the fhir-query-validator-factory trial the Lead
+gated round 1 correctly, then re-dispatched the fix round by messaging the
+already-finished agent. The host resumed that agent detached in the
+background, it terminated without a completion record, and the orchestrator
+sat waiting on a result that could never arrive. The same run also left the
+GitHub board stale (ticket never moved to Agent Work) and gave the user no
+status surface while waiting.
+
+### Added (contract — minor bump)
+- `contract/orchestration.md` — "Lost agents and recovery" section: dispatch
+  is synchronous from the orchestrator's point of view; an agent that ends
+  without a Return is `halted`; Lead MUST inspect the working tree, salvage
+  committed work (rendering the Return block on the agent's behalf), and
+  re-dispatch the remainder fresh — never wait indefinitely. Turns that end
+  with a task `in-progress` MUST end with the Squad Board plus a
+  "waiting on" line.
+- `contract/orchestration.md` — gate: `CHANGES REQUESTED` now returns the
+  task to the same **role** via a fresh dispatch (feedback appended to the
+  brief, new Handoff block). Resuming/messaging a completed agent is
+  explicitly prohibited.
+- Host mapping — Agent tool calls are `run_in_background: false`; a parallel
+  wave is multiple synchronous calls in one message; board status mirroring
+  belongs to the PM plugin (ai-dlc-board-manager), which orchestrate invokes
+  when `.ai-dlc.yml` wires a board.
+
+### Changed
+- `skills/orchestrate/SKILL.md` (0.2.0) — implements all of the above:
+  synchronous spawns only, fresh-agent fix rounds ("round 2" handoffs),
+  a "Recover lost agents" runbook step, board mirroring before the first
+  handoff, and a visibility rule that no turn ends silently while a task is
+  in progress.
+
 ## [0.6.1] — Lead adopts its alias at session start
 
 First field-trial fix. In 0.6.0 the orchestrate skill read the ticket before
