@@ -692,6 +692,26 @@ section('usage-tracker');
     sessions2.length === 2 && ledger.issues['42'].sessions.s2.input === 300,
     JSON.stringify(ledger));
 
+  // Spawned-subagent transcripts live under <session>/subagents/ and must be
+  // summed too, or orchestrated-dispatch feature totals miss the squad (the
+  // agents that did the bulk of the work).
+  const orchT = path.join(SCRATCH, 'sess-orch.jsonl');
+  write(orchT, JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  const orchSubDir = path.join(SCRATCH, 'sess-orch', 'subagents');
+  write(path.join(orchSubDir, 'agent-aaa.jsonl'), JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 1000, output_tokens: 700, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  write(path.join(orchSubDir, 'agent-bbb.jsonl'), JSON.stringify({ type: 'assistant', message: { role: 'assistant',
+    usage: { input_tokens: 2000, output_tokens: 300, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }) + '\n');
+  r = runNode(UT, { stdin: JSON.stringify({ session_id: 'orch', transcript_path: orchT }), cwd: proj4 });
+  ledger = JSON.parse(read(ledgerPath) || '{}');
+  const os = (ledger.issues['42'] || {}).sessions || {};
+  check('usage-tracker: sums spawned-subagent transcripts',
+    r.status === 0 && os.orch && os.orch.output === 5 &&
+    os['agent-aaa'] && os['agent-aaa'].output === 700 &&
+    os['agent-bbb'] && os['agent-bbb'].input === 2000,
+    JSON.stringify(ledger));
+
   const proj5 = path.join(SCRATCH, 'proj5');
   fs.mkdirSync(proj5, { recursive: true });
   r = runNode(UT, { stdin: payload('s1'), cwd: proj5 });

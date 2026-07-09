@@ -191,10 +191,18 @@ Semantics (contract):
   recomputes THIS session's cumulative totals from the transcript and
   **overwrites** its `sessions.<session-id>` entry — repeated Stop events
   never double-count.
+- The hook also sums every spawned-subagent transcript Claude Code writes
+  under `<session>/subagents/<agent-id>.jsonl` (a sibling of the main session
+  transcript, not part of it), recording each under its own
+  `sessions.<agent-id>` entry. This is required for orchestrated dispatch:
+  the squad agents do the bulk of the work in separate transcripts, so
+  without it the feature total would reflect only the orchestrator's own
+  overhead. Each subagent entry is likewise overwritten per Stop, so the
+  accounting stays idempotent.
 - Multiple sessions (Architect design session, Implementer session, a
-  resumed session) accumulate as separate entries under the same issue; the
-  feature total is the sum across sessions. `move-to-pr-review` emits that
-  sum as a `USAGE_TOTAL` line at PR time.
+  resumed session) and every subagent accumulate as separate entries under
+  the same issue; the feature total is the sum across all of them.
+  `move-to-pr-review` emits that sum as a `USAGE_TOTAL` line at PR time.
 - Caveats: totals are session-scoped approximations — every turn of a
   session holding the marker counts toward the issue, including triage
   chatter. The ledger is Claude Code-specific (transcript parsing); other
@@ -221,8 +229,9 @@ The following are part of the public contract:
    marker; `clear` removes the marker), and the CLI works without `js-yaml`
    installed (built-in YAML fallback).
 6. The usage ledger schema (`.agent-squad/usage.json`:
-   `issues.<issue>.sessions.<session-id>.{input,output,cache_read,cache_create}`)
-   and the `USAGE_TOTAL` stdout line emitted by `move-to-pr-review`.
+   `issues.<issue>.sessions.<key>.{input,output,cache_read,cache_create}`,
+   where `<key>` is a session id or a spawned-subagent id) and the
+   `USAGE_TOTAL` stdout line emitted by `move-to-pr-review`.
 
 What is **not** contract:
 
