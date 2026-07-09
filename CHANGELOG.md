@@ -6,6 +6,42 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.8.0] — squad-session works without js-yaml; `get` subcommand
+
+Third field-trial fix. In the fhir-query-validator-factory trial the shipped
+`squad-session.js` (copied into the consumer project under `scripts/hooks/`)
+exited with "js-yaml is required" because the consumer had never run
+`npm install`. The `.agent-squad/session.yml` marker could not be flipped
+from `role: lead`, so `branch-guard` blocked the integration-tester's writes
+to `tests/integration/` and stranded the orchestration wave. Per the coding
+standard, hook-adjacent scripts must degrade gracefully when dependencies are
+absent — hand-parse simple YAML where possible.
+
+### Added (contract — minor bump)
+- `bin/squad-session.js` — `get [<field>]` subcommand: prints the active
+  marker as JSON (or a single field's value; lists print one item per line),
+  exits `1` when no marker is active.
+- `contract/tool-hooks.md` — the `squad-session` CLI is now contractually
+  required to work without `js-yaml` installed, and its semantics include
+  `get`.
+
+### Fixed
+- `bin/squad-session.js` — `js-yaml` is now optional. When it cannot be
+  resolved (consumer project without `npm install`), the CLI falls back to a
+  built-in hand-rolled YAML emitter/parser covering the flat session.yml
+  schema (`construct_version`, `role`, `persona`, `skills`, `write_lanes`,
+  `read_lanes`, `issue`, `model`), persona frontmatter scalars, and the
+  conventional AGENTS.md role-schema layout (flow and block lists, flow maps,
+  nested lanes). Markers written by the fallback are byte-compatible with the
+  hand parser `branch-guard` already uses. `AGENT_SQUAD_NO_JS_YAML=1` forces
+  the fallback (used by the smoke tests).
+
+### Tests
+- `tests/run.js` — new "squad-session js-yaml fallback" section (10 checks):
+  set/get/clear without js-yaml, flow- and block-style AGENTS.md parsing,
+  persona default-model resolution, and branch-guard lane enforcement driven
+  by a fallback-written marker (the exact stranded-wave scenario).
+
 ## [0.7.0] — synchronous dispatch, lost-agent recovery, board mirroring
 
 Second field-trial fix. In the fhir-query-validator-factory trial the Lead
