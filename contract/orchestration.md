@@ -45,8 +45,10 @@ the assigned role.
    wave starts (workflow Stage 2 hard rule).
 5. **Dispatch loop.** For each wave, in order:
    - Render a *Handoff block* for every task in the wave.
-   - Spawn one agent per task (host mapping below). Parallel tasks are spawned
-     together; sequential tasks one at a time.
+   - Spawn one agent per task (host mapping below), synchronously — the
+     orchestrator waits on results, never parks a task on a detached
+     background execution. Parallel tasks are spawned together; sequential
+     tasks one at a time.
    - On each agent's completion, render its *Return block*.
    - Lead runs the **gate** (below) on each returned task.
    - Re-render the *Squad Board* after every status change.
@@ -233,11 +235,45 @@ After each Return block, Lead verifies before approving:
 4. In parallel mode: branch rebases cleanly on the default branch.
 
 Verdicts: `APPROVED` (task proceeds to merge / next task starts),
-`CHANGES REQUESTED` (same agent is re-dispatched with the feedback appended to
-its brief; board status `changes-requested`), `HALTED` (escalated to the
-human; board status `halted`; the wave pauses).
+`CHANGES REQUESTED` (the task returns to the same **role** for a fix round;
+board status `changes-requested`), `HALTED` (escalated to the human; board
+status `halted`; the wave pauses).
+
+A `CHANGES REQUESTED` fix round is a **fresh dispatch**: Lead appends the
+review feedback to the task's brief and spawns a new agent for the same role
+(rendered as a new Handoff block, e.g. "round 2"). Everything the fix round
+needs lives in the brief, the branch, and the diff — not in the finished
+agent's memory. Lead MUST NOT depend on resuming or messaging an agent that
+has already returned; on most hosts a completed agent has no active task and
+a "resume" runs detached from the dispatch loop, which strands the
+orchestrator waiting on a result that can never arrive.
 
 A wave, and therefore the ticket, cannot complete with any task not `approved`.
+
+---
+
+## Lost agents and recovery
+
+Dispatch is synchronous from the orchestrator's point of view: the Lead hands
+off, the agent runs, the agent returns. The Lead MUST NOT park a task on a
+detached/background execution and wait indefinitely.
+
+If the host reports a dispatched agent as stopped, killed, or finished
+without a completion record — or an agent simply never produces a Return —
+the task is `halted`, and Lead MUST actively recover rather than wait:
+
+1. **Inspect the working tree** the agent was assigned (`git status` /
+   `git log` in the checkout or worktree) to see what actually landed.
+2. **Salvage** committed work: gate whatever exists exactly as if it had been
+   returned (lane check, tests, self-review may be missing — note that in the
+   Return block, rendered by Lead on the agent's behalf with
+   `Result: halted (lost agent; salvaged from working tree)`).
+3. **Re-dispatch the remainder** as a fresh agent for the same role, with the
+   brief updated to state what is already done and what is left.
+
+A turn that ends while any task is `in-progress` MUST end with the current
+Squad Board plus one line naming what the Lead is waiting on and where the
+user can watch progress (branch, worktree path, board URL).
 
 ---
 
@@ -246,10 +282,20 @@ A wave, and therefore the ticket, cannot complete with any task not `approved`.
 On Claude Code, the natural mapping is:
 
 - Orchestrating session = the Lead persona (`/agent-squad:orchestrate`).
-- Spawned agent = a subagent via the Agent tool. The agent description SHOULD
-  be `<alias> (<role-name>): <task title>` so the host UI itself shows who is
+- Spawned agent = a subagent via the Agent tool with
+  `run_in_background: false`. The agent description SHOULD be
+  `<alias> (<role-name>): <task title>` so the host UI itself shows who is
   working — the board and the host's agent list stay consistent.
-- Parallel wave = all Agent calls issued together; sequential = one at a time.
+- Parallel wave = all synchronous Agent calls issued in a single message (the
+  host runs them concurrently and returns when all finish); sequential = one
+  at a time. Fix rounds are new Agent calls, never SendMessage to a finished
+  agent.
+- Board status (Agent Work, PR Review, ...) is the PM plugin's job, not the
+  construct's: when the project wires a board via `.ai-dlc.yml`, the Lead
+  mirrors dispatch into it through that plugin (e.g. ai-dlc-board-manager's
+  start-feature moves the issue to Agent Work; finish-feature's post-pr hook
+  moves it to PR Review). Orchestration renders its own Squad Board either
+  way.
 - Worktrees are created by the Lead with `git worktree add` before spawning,
   so paths are deterministic and survive agent failure.
 

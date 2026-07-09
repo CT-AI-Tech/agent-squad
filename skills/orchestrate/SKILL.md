@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-version: 0.1.1
+version: 0.2.0
 construct_version: ">=0.1.0"
 description: The Lead's dispatch loop. Reads a ticket, decomposes into tasks, hands each to a named squad agent (visible handoff blocks + live squad board), runs them sequentially on one branch or in parallel via git worktrees, gates every return.
 persona_affinity: [lead]
@@ -76,6 +76,13 @@ other task.
 
 ### 4. Dispatch loop
 
+**Board mirroring (once, before the first handoff).** If `.ai-dlc.yml` wires
+a project board, move the ticket to Agent Work through the PM plugin's board
+provider (ai-dlc-board-manager) — and at finish, let `finish-feature`'s
+`post-pr` hook move it to PR Review as usual. The construct's Squad Board is
+rendered either way; the GitHub board is the PM plugin's surface and must not
+be left stale.
+
 For each wave in order:
 
 **Prepare branches.**
@@ -86,9 +93,11 @@ For each wave in order:
   Ensure `.worktrees/` is in `.gitignore`.
 
 **Hand off.** For each task in the wave, render the **Handoff block**, then
-spawn one subagent via the Agent tool. Parallel wave: spawn all tasks in a
-single message so they run concurrently. Agent description:
-`<alias> (<role-name>): <task title>`.
+spawn one subagent via the Agent tool — always synchronous
+(`run_in_background: false`); never park a task on a background execution.
+Parallel wave: spawn all tasks as synchronous Agent calls in a single message
+so they run concurrently and the turn resumes when all have returned. Agent
+description: `<alias> (<role-name>): <task title>`.
 
 Subagent prompt template (fill every placeholder; paste lane globs verbatim
 from `AGENTS.md`):
@@ -130,10 +139,25 @@ narrow, or the contract is wrong. Never merge, never close issues.
 2. Gate per `contract/orchestration.md#gate`: self-review substantive; diff
    files within lane (`git diff --stat <base>...<branch>` or the PR file
    list); testable check met (run it when cheap).
-3. Verdict `APPROVED`: proceed. `CHANGES REQUESTED`: append feedback to the
-   task brief and re-dispatch the same agent. `HALTED`: pause the wave and
-   surface to the user.
+3. Verdict `APPROVED`: proceed. `CHANGES REQUESTED`: append the feedback to
+   the task brief and spawn a **fresh** agent for the same role (new Handoff
+   block, labelled "round 2"). Everything the fix round needs is in the
+   brief, the branch, and the diff. Do NOT SendMessage or resume the finished
+   agent — a completed agent has no active task, the host "resumes" it
+   detached in the background, and its result never reaches this loop (this
+   is exactly the stall the recovery rules below exist for). `HALTED`: pause
+   the wave and surface to the user.
 4. Re-render the **Squad Board** after every transition.
+
+**Recover lost agents.** If a spawn ends without a Return (host notification
+says stopped / killed / "no completion record", or a background execution you
+did not intend), do not wait: treat the task as `halted`, inspect the agent's
+working directory (`git status`, `git log`, diff vs the wave base) to see
+what landed, render a Return block on the agent's behalf
+(`Result: halted (lost agent; salvaged from working tree)`), gate whatever
+was committed, and re-dispatch the remainder as a fresh agent with the brief
+updated to say what is already done. Never leave the user watching a task
+that nothing is working on.
 
 **Close the wave.** Parallel mode: merge the wave's PRs in dependency order,
 then `git worktree remove .worktrees/<issue>-<task-slug>` for each. The next
@@ -157,6 +181,9 @@ wave starts only after all merges land.
   `contract/orchestration.md` only.
 - Address agents by alias — including yourself. "Pradhan -> Dharak
   (db-engineer)" reads like a team; "the Lead is running subagent 2" does not.
+- Never end a turn while a task is `in-progress` without the current Squad
+  Board plus one line saying what you are waiting on and where the user can
+  watch (branch, worktree path, board URL).
 
 ## References
 
