@@ -53,8 +53,16 @@ automatically (pre-implement). Lead and Architect flows write it via the
 
 ```
 node <plugin-root>/bin/squad-session.js set <role-name> [--issue N]
+node <plugin-root>/bin/squad-session.js get [<field>]
 node <plugin-root>/bin/squad-session.js clear
 ```
+
+`get` prints the active marker as JSON (or a single field's value; lists print
+one item per line) and exits `1` when no marker is active. The CLI prefers
+`js-yaml` when installed but MUST NOT require it: consumer projects run the
+shipped script in environments where `npm install` has never happened, so all
+marker reads/writes and conventional AGENTS.md role blocks fall back to a
+built-in hand-rolled YAML parser/emitter.
 
 Exactly one role is active per session at a time — writing the marker replaces
 any previous one. `bin/squad-status.js` renders the marker as a statusline
@@ -200,9 +208,10 @@ The following are part of the public contract:
    `construct_version`, `model`, `estimate`).
 3. The `.ai-dlc.yml` `hooks:` mode key names (shared with lifecycle hooks).
 4. Exit code semantics under each supported host.
-5. The `squad-session` CLI semantics: any persona may write/clear the marker
-   (`set <role-name>` resolves the role from the project AGENTS.md; `clear`
-   removes the marker).
+5. The `squad-session` CLI semantics: any persona may write/read/clear the
+   marker (`set <role-name>` resolves the role from the project AGENTS.md;
+   `get [<field>]` prints the active marker; `clear` removes the marker), and
+   the CLI works without `js-yaml` installed (built-in YAML fallback).
 6. The usage ledger schema (`.agent-squad/usage.json`:
    `issues.<issue>.sessions.<session-id>.{input,output,cache_read,cache_create}`)
    and the `USAGE_TOTAL` stdout line emitted by `move-to-pr-review`.

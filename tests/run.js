@@ -500,6 +500,94 @@ section('squad-session / squad-status / session-context');
     r.stdout + r.stderr);
 }
 
+// ─── squad-session js-yaml fallback ──────────────────────────────────────
+section('squad-session js-yaml fallback');
+
+{
+  // AGENT_SQUAD_NO_JS_YAML forces the hand-rolled YAML fallback so these
+  // tests exercise the no-dependency path even though js-yaml is installed
+  // in this repo. This is the field scenario where a consumer project runs
+  // the shipped script without ever running npm install.
+  const NOYAML = { AGENT_SQUAD_NO_JS_YAML: '1' };
+  const proj2 = path.join(SCRATCH, 'proj2'); // AGENTS.md with flow-list lanes, marker cleared above
+
+  let r = runNode(BIN('squad-session.js'), { args: ['set', 'backend-dev', '--issue', '9'], cwd: proj2, env: NOYAML });
+  const fm1 = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
+  check('fallback set: writes marker without js-yaml',
+    r.status === 0 && /persona: implementer/.test(fm1) && /model: haiku/.test(fm1) &&
+    /write_lanes:\r?\n  - app\//.test(fm1) && /issue: 9/.test(fm1),
+    'exit=' + r.status + ' out=' + r.stdout + r.stderr + '\n' + fm1);
+
+  r = runNode(BIN('squad-session.js'), { args: ['get'], cwd: proj2, env: NOYAML });
+  let got = null;
+  try { got = JSON.parse(r.stdout); } catch {}
+  check('fallback get: prints marker as JSON',
+    r.status === 0 && got && got.role === 'backend-dev' && got.persona === 'implementer' &&
+    Array.isArray(got.write_lanes) && got.write_lanes.join(',') === 'app/,tests/',
+    'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  r = runNode(BIN('squad-session.js'), { args: ['get', 'model'], cwd: proj2, env: NOYAML });
+  check('fallback get <field>: prints scalar value',
+    r.status === 0 && r.stdout.trim() === 'haiku', 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  r = runNode(BIN('squad-session.js'), { args: ['get'], cwd: proj2 });
+  try { got = JSON.parse(r.stdout); } catch { got = null; }
+  check('get: also works with js-yaml present',
+    r.status === 0 && got && got.role === 'backend-dev', 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'lead'], cwd: proj2, env: NOYAML });
+  const fm2 = read(path.join(proj2, '.agent-squad', 'session.yml')) || '';
+  check('fallback set: lead resolves persona default model',
+    r.status === 0 && /persona: lead/.test(fm2) && /model: opus/.test(fm2),
+    'exit=' + r.status + ' out=' + r.stdout + r.stderr + '\n' + fm2);
+
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'nonexistent'], cwd: proj2, env: NOYAML });
+  check('fallback set: rejects unknown role',
+    r.status === 1 && /not found/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+
+  runNode(BIN('squad-session.js'), { args: ['clear'], cwd: proj2 });
+  r = runNode(BIN('squad-session.js'), { args: ['get'], cwd: proj2, env: NOYAML });
+  check('fallback get: exits 1 without marker',
+    r.status === 1 && /no active session marker/.test(r.stdout + r.stderr), 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  // Block-style AGENTS.md (nested lanes lists) + branch-guard interop:
+  // the fallback-emitted marker must drive lane checks. This mirrors the
+  // orchestration incident where the marker could not be flipped from
+  // role: lead and branch-guard blocked the integration-tester's lane.
+  const proj6 = initRepo('proj6');
+  write(path.join(proj6, 'AGENTS.md'), [
+    '# project', '```yaml', 'construct_version: ">=0.3.0"', 'roles:',
+    '  - name: lead', '    persona: lead', '    skills: []',
+    '    lanes:', '      write: []',
+    '  - name: integration-tester', '    persona: implementer',
+    '    skills:', '      - python',
+    '    lanes:', '      write:', '        - tests/integration/',
+    '      read:', '        - docs/contracts/', '```', ''
+  ].join('\n'));
+  git(['checkout', '-q', '-b', 'feature/9-integration'], proj6);
+
+  r = runNode(BIN('squad-session.js'), { args: ['set', 'integration-tester', '--issue', '9'], cwd: proj6, env: NOYAML });
+  const fm3 = read(path.join(proj6, '.agent-squad', 'session.yml')) || '';
+  check('fallback set: parses block-style skills and lanes',
+    r.status === 0 && /role: integration-tester/.test(fm3) &&
+    /write_lanes:\r?\n  - tests\/integration\//.test(fm3) &&
+    /read_lanes:\r?\n  - docs\/contracts\//.test(fm3) && /skills:\r?\n  - python/.test(fm3),
+    'exit=' + r.status + ' out=' + r.stdout + r.stderr + '\n' + fm3);
+
+  r = runNode(HOOK('branch-guard.js'), {
+    stdin: '{"tool_input":{"file_path":"tests/integration/test_api.py"}}', cwd: proj6
+  });
+  check('fallback marker: branch-guard allows write lane',
+    r.status === 0, 'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+
+  r = runNode(HOOK('branch-guard.js'), {
+    stdin: '{"tool_input":{"file_path":"src/main.py"}}', cwd: proj6
+  });
+  check('fallback marker: branch-guard blocks outside lane',
+    r.status === 2 && /outside the write lane/.test(r.stdout),
+    'exit=' + r.status + ' out=' + r.stdout + r.stderr);
+}
+
 // ─── check-brief model resolution ────────────────────────────────────────
 section('check-brief model resolution');
 
