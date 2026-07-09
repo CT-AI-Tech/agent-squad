@@ -6,6 +6,22 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.6.1] — Lead adopts its alias at session start
+
+First field-trial fix. In 0.6.0 the orchestrate skill read the ticket before
+`AGENTS.md`, so the Lead's opening narration ("I'll act as the Lead...")
+happened before it knew its alias, and the alias instruction was too weak to
+change its voice afterwards.
+
+### Fixed
+- `skills/orchestrate/SKILL.md` (0.1.1) — reading `AGENTS.md` is now the
+  first intake action; the Lead adopts the lead role's alias immediately,
+  introduces itself by name, and never self-refers as "the Lead" when an
+  alias is defined. Visibility rule extended to the Lead's own voice.
+- `contract/orchestration.md` — visibility contract now states explicitly
+  that the alias rule includes the Lead itself (clarification, not a block
+  or policy change).
+
 ## [0.6.0] — single-session squad dispatch (orchestrate)
 
 The Lead persona can now run the whole workflow in one session, visibly

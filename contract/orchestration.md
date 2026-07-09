@@ -70,6 +70,11 @@ Orchestration exists to make delegation *observable*. A Lead that dispatches
 silently — spawning agents without rendering the blocks below — violates this
 contract.
 
+Every squad member is addressed by its `alias` when one is defined — the Lead
+included: the orchestrating session reads `AGENTS.md` before any other work,
+adopts the lead role's alias, and speaks under that name in all narration and
+blocks for the rest of the session.
+
 Required rendering, in the session transcript, in plain ASCII (markdown tables
 and `->` arrows; no emoji, no box-drawing characters):
 

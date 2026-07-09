@@ -1,6 +1,6 @@
 {
   "name": "agent-squad",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Organisation-wide agent construct: personas (lead, architect, implementer), role composition schema, self-review format, lifecycle + tool hooks. Pluggable domain skills layer on top.",
   "author": {
     "name": "agent-squad core"
