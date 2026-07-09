@@ -6,7 +6,7 @@
 // hook; Lead and Architect flows use this CLI when they activate.
 //
 // Usage (run from the consumer project root, where AGENTS.md lives):
-//   node <plugin-root>/bin/squad-session.js set <role-name> [--issue N]
+//   node <plugin-root>/bin/squad-session.js set <role-name> [--issue N] [--estimate S|M|L|XL]
 //   node <plugin-root>/bin/squad-session.js get [<field>]
 //   node <plugin-root>/bin/squad-session.js clear
 //
@@ -36,6 +36,7 @@ if (!process.env.AGENT_SQUAD_NO_JS_YAML) {
 
 const PLUGIN_ROOT = path.resolve(__dirname, '..');
 const MODEL_VALUES = ['opus', 'sonnet', 'haiku', 'inherit'];
+const VALID_ESTIMATES = ['S', 'M', 'L', 'XL'];
 const MARKER_LIST_KEYS = ['skills', 'write_lanes', 'read_lanes'];
 
 // --- hand-rolled YAML fallback helpers -------------------------------------
@@ -307,7 +308,7 @@ if (cmd === 'get') {
 }
 
 if (cmd !== 'set' || !args[1]) {
-  console.error('Usage: squad-session set <role-name> [--issue N] | squad-session get [<field>] | squad-session clear');
+  console.error('Usage: squad-session set <role-name> [--issue N] [--estimate S|M|L|XL] | squad-session get [<field>] | squad-session clear');
   process.exit(2);
 }
 
@@ -319,6 +320,25 @@ if (issueIdx !== -1) {
   if (!issue) {
     console.error('squad-session: --issue requires a value');
     process.exit(2);
+  }
+}
+
+// --estimate carries the brief's size class (S|M|L|XL) onto the marker so the
+// PR-time token note can compare the estimate with recorded actuals. In the
+// implementer flow the pre-implement hook copies it from the brief; in
+// dispatch (orchestrate) the Lead passes it here from the brief frontmatter.
+let estimate = null;
+const estIdx = args.indexOf('--estimate');
+if (estIdx !== -1) {
+  const rawEst = args[estIdx + 1];
+  if (!rawEst) {
+    console.error('squad-session: --estimate requires a value (S|M|L|XL)');
+    process.exit(2);
+  }
+  estimate = String(rawEst).trim().toUpperCase();
+  if (!VALID_ESTIMATES.includes(estimate)) {
+    console.error('squad-session: invalid estimate "' + rawEst + '". Valid: ' + VALID_ESTIMATES.join(', '));
+    process.exit(1);
   }
 }
 
@@ -337,6 +357,21 @@ if (resolved.model && !MODEL_VALUES.includes(resolved.model)) {
 
 const model = resolved.model || personaDefaultModel(resolved.persona);
 
+// Preserve an existing estimate across role switches: sequential dispatch
+// re-sets the marker per task, and rebuilding it from the role alone would
+// otherwise drop the size class the feature was estimated at. An explicit
+// --estimate always wins over the preserved value.
+if (!estimate && fs.existsSync(markerPath)) {
+  try {
+    const prevText = fs.readFileSync(markerPath, 'utf8');
+    let prev = null;
+    if (yaml) { try { prev = yaml.load(prevText); } catch { prev = null; } }
+    if (!prev || typeof prev !== 'object') prev = fallbackParseMarker(prevText);
+    const prevEst = prev && prev.estimate ? String(prev.estimate).trim().toUpperCase() : null;
+    if (prevEst && VALID_ESTIMATES.includes(prevEst)) estimate = prevEst;
+  } catch {}
+}
+
 const marker = {
   construct_version: constructVersion(),
   role: resolved.name,
@@ -347,6 +382,7 @@ const marker = {
 };
 if (issue) marker.issue = issue;
 if (model) marker.model = model;
+if (estimate) marker.estimate = estimate;
 
 const markerDir = path.dirname(markerPath);
 if (!fs.existsSync(markerDir)) fs.mkdirSync(markerDir, { recursive: true });
@@ -354,5 +390,6 @@ fs.writeFileSync(markerPath, yaml ? yaml.dump(marker) : dumpFlatYaml(marker));
 
 console.log('[squad-session] active: persona=' + resolved.persona + ' role=' + resolved.name +
   (issue ? ' issue=#' + issue : '') + (model ? ' model=' + model : '') +
+  (estimate ? ' estimate=' + estimate : '') +
   (yaml ? '' : ' (js-yaml unavailable; used built-in YAML fallback)'));
 process.exit(0);

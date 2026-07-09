@@ -6,6 +6,41 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.8.1] — dispatch carries the estimate onto the marker (token note fix)
+
+Field-trial regression. Once work moved to single-session `orchestrate`
+dispatch, the Lead and its spawned agents write the session marker via
+`squad-session set` instead of going through `/agent-squad:implement`. Only the
+`implement` skill's `pre-implement` hook (`check-brief-and-contract`) ever
+copied the brief's `estimate` onto the marker, so in dispatch mode
+`marker.estimate` was always absent. `move-to-pr-review` then emitted
+`USAGE_TOTAL` with no `estimate=`, and `finish-feature`'s `### Token usage`
+note lost the estimate half — the "token estimation vanished" symptom. (The
+actuals kept recording; the ledger keys off `marker.issue`, which
+`squad-session` does set.)
+
+### Added (contract — minor bump)
+- `bin/squad-session.js` — `set` accepts `--estimate S|M|L|XL` (case-insensitive
+  input, stored uppercase; invalid values exit `1`), putting the brief's size
+  class on the marker in dispatch mode. When the flag is omitted, `set`
+  preserves any estimate already on the marker, so sequential dispatch
+  switching roles per task does not drop it.
+- `contract/tool-hooks.md` — `--estimate` documented in the CLI semantics and
+  the `estimate` marker-field note; `contract/orchestration.md` and
+  `contract/brief-format.md` state that dispatch carries the estimate via the
+  CLI rather than the `pre-implement` hook.
+
+### Changed
+- `skills/orchestrate/SKILL.md` (0.2.1) — the subagent marker-set command now
+  passes `--estimate <brief-estimate>`, with a note that it comes from the
+  task brief frontmatter and is omitted when the brief has none.
+
+### Tests
+- `tests/run.js` — estimate coverage in both the js-yaml and fallback
+  squad-session sections: `--estimate` records and normalizes the value,
+  `get estimate` reads it back, a role switch without the flag preserves it,
+  and an invalid value exits `1`.
+
 ## [0.8.0] — squad-session works without js-yaml; `get` subcommand
 
 Third field-trial fix. In the fhir-query-validator-factory trial the shipped

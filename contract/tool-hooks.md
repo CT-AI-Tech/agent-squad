@@ -52,10 +52,16 @@ automatically (pre-implement). Lead and Architect flows write it via the
 `squad-session` CLI when they activate, and clear it on hand-off:
 
 ```
-node <plugin-root>/bin/squad-session.js set <role-name> [--issue N]
+node <plugin-root>/bin/squad-session.js set <role-name> [--issue N] [--estimate S|M|L|XL]
 node <plugin-root>/bin/squad-session.js get [<field>]
 node <plugin-root>/bin/squad-session.js clear
 ```
+
+`--estimate` records the brief's size class on the marker (the dispatch-mode
+equivalent of what the `pre-implement` hook does for the implementer flow); an
+invalid value exits `1`. When `--estimate` is omitted, `set` preserves any
+estimate already on the marker, so switching roles mid-feature (sequential
+dispatch re-sets the marker per task) does not drop it.
 
 `get` prints the active marker as JSON (or a single field's value; lists print
 one item per line) and exits `1` when no marker is active. The CLI prefers
@@ -112,7 +118,7 @@ ledger `usage.json`). It is local to each agent session.
 | `write_lanes` | list of globs | yes | resolved from role.lanes.write |
 | `read_lanes` | list of globs | optional | resolved from role.lanes.read |
 | `model` | string | optional | resolved model hint: role `model` if set, else persona frontmatter `model`. One of `opus`, `sonnet`, `haiku`, `inherit` |
-| `estimate` | string | optional | size class from the brief frontmatter (`S`, `M`, `L`, `XL`), copied by the pre-implement hook; absent for lead/architect markers (no brief). See [`brief-format.md`](brief-format.md) |
+| `estimate` | string | optional | size class from the brief frontmatter (`S`, `M`, `L`, `XL`), copied by the pre-implement hook (implementer flow) or set via `squad-session set --estimate` (dispatch flow); absent for lead/architect markers (no brief). See [`brief-format.md`](brief-format.md) |
 
 ## Host registration
 
@@ -209,9 +215,11 @@ The following are part of the public contract:
 3. The `.ai-dlc.yml` `hooks:` mode key names (shared with lifecycle hooks).
 4. Exit code semantics under each supported host.
 5. The `squad-session` CLI semantics: any persona may write/read/clear the
-   marker (`set <role-name>` resolves the role from the project AGENTS.md;
-   `get [<field>]` prints the active marker; `clear` removes the marker), and
-   the CLI works without `js-yaml` installed (built-in YAML fallback).
+   marker (`set <role-name>` resolves the role from the project AGENTS.md and
+   accepts `--issue N` and `--estimate S|M|L|XL`, preserving an existing
+   estimate when the flag is omitted; `get [<field>]` prints the active
+   marker; `clear` removes the marker), and the CLI works without `js-yaml`
+   installed (built-in YAML fallback).
 6. The usage ledger schema (`.agent-squad/usage.json`:
    `issues.<issue>.sessions.<session-id>.{input,output,cache_read,cache_create}`)
    and the `USAGE_TOTAL` stdout line emitted by `move-to-pr-review`.
