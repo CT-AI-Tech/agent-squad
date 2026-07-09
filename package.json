@@ -1,6 +1,6 @@
 {
   "name": "agent-squad",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Organisation-wide agent construct: personas, role schema, self-review format, lifecycle hooks.",
   "private": true,
   "engines": {

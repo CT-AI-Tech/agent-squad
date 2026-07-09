@@ -6,6 +6,13 @@ Versioning is strict semver on the contract surface defined in [CONTRACT.md](CON
 
 ## [Unreleased]
 
+## [0.6.0] — single-session squad dispatch (orchestrate)
+
+The Lead persona can now run the whole workflow in one session, visibly
+handing each task to a named squad agent — sequential plans on one branch/PR,
+parallel waves in per-task git worktrees. Contract changes are additive
+(minor bump).
+
 ### Added
 - `contract/orchestration.md` — single-session squad dispatch protocol
   (contract surface, referenced as CONTRACT.md section 9). The Lead persona
