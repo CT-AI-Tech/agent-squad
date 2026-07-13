@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-DLC &amp; Agent Squad &mdash; CitiusTech Briefing</title>
+<style>
+  :root{
+    /* Official "CitiusTech Brand Colours" theme */
+    --brand:#211CE8;        /* indigo  (accent1, primary) */
+    --brand-dark:#180C4B;   /* navy    (accent2) */
+    --deep:#2E006B;         /* deep purple (lt2) */
+    --ink:#1D1A3D;          /* body text */
+    --muted:#5A5A7A;
+    --accent:#006EFC;       /* blue    (accent4) */
+    --cyan:#70F2FF;         /* cyan    (accent3) */
+    --magenta:#2E006B;      /* alt accent -> deep purple */
+    --violet:#8C82FF;       /* lavender (accent5) */
+    --lightblue:#6BBDFA;    /* accent6 */
+    --bg:#FFFFFF;
+    --panel:#F2F1FF;
+    --panel2:#EDEBFF;       /* official light-lavender band */
+    --edge:#DCDAF6;
+    --code-bg:#180C4B;
+    --ok:#006EFC;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:#180C4B;color:var(--ink);
+    font-family:"Aptos","Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:16px;line-height:1.5;}
+  h1,h2,h3,.divider .num,.cover .sub{font-family:"Aptos Light","Aptos","Segoe UI",Arial,sans-serif;}
+  a{color:var(--brand);text-decoration:none;}
+  code{font-family:"Cascadia Code","Consolas","Fira Code",monospace;font-size:0.85em;
+    color:var(--brand-dark);background:var(--panel2);padding:1px 6px;border-radius:4px;border:1px solid var(--edge);}
+  pre{margin:10px 0;background:var(--code-bg);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+  pre code{background:transparent;color:#E7E6FF;padding:0;border:0;font-size:12.5px;line-height:1.6;
+    display:block;white-space:pre;}
+  .tok-c{color:#70F2FF;}   /* command  -> cyan */
+  .tok-m{color:#9C98D8;}   /* comment  -> muted lavender */
+  .tok-a{color:#6BBDFA;}   /* arg      -> light blue */
+
+  /* ---- deck shell ---- */
+  #deck{position:relative;height:100vh;width:100vw;overflow:hidden;}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;
+    background:var(--bg);padding:0;overflow:hidden;}
+  .slide.active{display:flex;animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* header + footer chrome */
+  .top{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 44px;border-bottom:3px solid var(--brand);}
+  .wm{display:flex;align-items:center;gap:2px;color:var(--brand-dark);}
+  .wm .dot{color:var(--brand);}
+  .wm .r{font-size:9px;font-weight:700;color:var(--muted);transform:translateY(-6px);}
+  .wm .ctlogo{height:21px;width:auto;display:block;color:inherit;}
+  .cover .wm .ctlogo{height:34px;}
+  .top .kick{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .body{flex:1;overflow-y:auto;padding:30px 54px 20px;}
+  .foot{display:flex;align-items:center;justify-content:space-between;
+    padding:9px 44px;border-top:1px solid var(--edge);font-size:11px;color:var(--muted);background:var(--panel);}
+  .foot .conf{letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+  h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px;color:var(--brand-dark);line-height:1.12;}
+  h2{font-size:15px;font-weight:800;letter-spacing:.02em;margin:0 0 18px;color:var(--brand);text-transform:uppercase;}
+  h3{font-size:16px;font-weight:700;margin:0 0 6px;color:var(--brand-dark);}
+  p{margin:0 0 11px;}
+  ul,ol{margin:0 0 11px;padding-left:20px;}
+  li{margin-bottom:6px;}
+  .lead{font-size:18px;color:var(--ink);max-width:900px;}
+  .muted{color:var(--muted);}
+  .kick2{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;color:var(--accent);margin-bottom:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .col-2-3{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;}
+
+  .card{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:16px 18px;}
+  .card.tint{background:var(--panel2);}
+  .card.brand{background:linear-gradient(135deg,#211CE8,#006EFC);color:#fff;border:0;}
+  .card.brand h3,.card.brand .big{color:#fff;}
+  .card .ic{font-size:22px;font-weight:800;color:var(--brand);}
+  .card .big{font-size:30px;font-weight:800;color:var(--brand-dark);line-height:1;}
+  .card small{color:var(--muted);font-size:12px;}
+
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11px;font-weight:700;
+    letter-spacing:.04em;background:var(--panel2);color:var(--brand-dark);border:1px solid var(--edge);}
+  .pill.a{background:#E1ECFF;color:#123FB5;border-color:#BAD1FF;}
+  .pill.m{background:#ECE6FF;color:#2E006B;border-color:#D3C7F5;}
+  .pill.v{background:#E6E1FA;color:#4A338C;border-color:#CFC1EE;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0;}
+  th{background:var(--brand);color:#fff;text-align:left;padding:8px 11px;font-size:11px;
+    letter-spacing:.05em;text-transform:uppercase;}
+  th:first-child{border-radius:8px 0 0 0;} th:last-child{border-radius:0 8px 0 0;}
+  td{padding:8px 11px;border-bottom:1px solid var(--edge);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--panel);}
+
+  .flow{display:flex;align-items:stretch;gap:0;margin:8px 0;}
+  .flow .step{flex:1;background:var(--panel);border:1px solid var(--edge);border-radius:12px;
+    padding:14px 12px;text-align:center;position:relative;}
+  .flow .step .n{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-bottom:8px;}
+  .flow .arw{display:flex;align-items:center;color:var(--brand);font-size:22px;padding:0 6px;font-weight:700;}
+
+  .formula{font-size:22px;text-align:center;padding:22px;border-radius:14px;font-weight:800;
+    background:linear-gradient(135deg,#EDEBFF,#E3F0FF);border:1px solid var(--edge);color:var(--brand-dark);}
+  .formula .a{color:var(--brand);} .formula .b{color:var(--accent);} .formula .c{color:var(--deep);}
+
+  blockquote{margin:12px 0;padding:12px 18px;background:var(--panel2);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;font-size:14.5px;color:var(--brand-dark);}
+
+  .tag{font-size:11px;font-weight:700;color:var(--brand);letter-spacing:.05em;}
+  .persona-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .avatar{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:15px;}
+
+  /* Title slide */
+  .cover{background:linear-gradient(135deg,#180C4B 0%,#2E006B 58%,#211CE8 100%);color:#fff;
+    justify-content:center;align-items:flex-start;padding:0;}
+  .cover .inner{padding:0 72px;max-width:1000px;}
+  .cover h1{color:#fff;font-size:52px;line-height:1.06;margin-bottom:18px;}
+  .cover .sub{font-size:20px;color:#CFCBFF;max-width:760px;margin-bottom:26px;}
+  .cover .accent-bar{width:90px;height:6px;background:linear-gradient(90deg,#70F2FF,#8C82FF);border-radius:3px;margin-bottom:26px;}
+  .cover .meta{font-size:13px;color:#ABA5E6;letter-spacing:.04em;}
+  .cover .wm{color:#fff;font-size:26px;margin-bottom:40px;}
+  .cover .wm .dot{color:var(--cyan);}
+  .cover .wm .r{color:#ABA5E6;}
+
+  /* divider */
+  .divider{background:linear-gradient(135deg,#211CE8 0%,#180C4B 100%);color:#fff;justify-content:center;}
+  .divider .inner{padding:0 72px;}
+  .divider .num{font-size:15px;font-weight:800;letter-spacing:.3em;opacity:.75;margin-bottom:10px;color:var(--cyan);}
+  .divider h1{color:#fff;font-size:46px;max-width:900px;}
+  .divider p{font-size:19px;color:#D9D6FF;max-width:760px;}
+
+  /* nav */
+  .nav{position:fixed;bottom:14px;right:20px;display:flex;align-items:center;gap:8px;z-index:50;}
+  .nav button{width:34px;height:34px;border-radius:8px;border:1px solid var(--edge);background:#fff;
+    color:var(--brand-dark);font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .nav button:hover{background:var(--panel2);}
+  .nav .count{background:var(--brand-dark);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;
+    font-variant-numeric:tabular-nums;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .prog{position:fixed;top:0;left:0;height:4px;background:var(--accent);z-index:60;transition:width .2s;}
+
+  .note{background:#EDF3FF;border:1px dashed var(--accent);border-radius:10px;padding:10px 14px;font-size:13px;color:#123FB5;}
+  .chk{color:var(--ok);font-weight:800;}
+  .x{color:var(--magenta);font-weight:800;}
+
+  @media print{
+    html,body{height:auto;background:#fff;}
+    #deck{height:auto;width:auto;overflow:visible;}
+    .slide{display:flex!important;position:relative;height:100vh;page-break-after:always;box-shadow:none;}
+    .nav,.prog{display:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="prog" id="prog"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ct-logo" viewBox="0 0 1097.51 132.62"><g><path d="M307.53 82.14 307.53 85.97C307.53 100.23 307.35 113.11 295.3 123.04 283.24 132.78 268.54 132.6 253.12 132.6 216.96 132.6 190.56 130.86 190.56 83.18L190.56 49.42C190.55 6.27 214.12 0 253.12 0 289.63 0 306.65 3.65 307.36 42.82L307.36 47.87 270.84 47.87 270.84 42.82C269.61 31.16 261.27 30.28 249.22 30.28 229.01 30.28 227.06 36.38 227.06 55L227.06 75.36C227.06 94.86 227.95 102.34 249.22 102.34 263.93 102.34 271.02 101.3 271.02 85.99L271.02 82.16 307.53 82.16Z" stroke-width="0" fill="currentColor"/><path d="M351.48 131.57 320.99 131.57 320.99 40.2 351.48 40.2 351.48 131.57ZM351.48 24.02 320.99 24.02 320.99 1.06 351.48 1.06 351.48 24.03Z" stroke-width="0" fill="currentColor"/><path d="M438.51 62.12 403.24 62.12 403.24 103.02C403.42 108.42 404.5 110.68 410.16 110.68 418.13 110.68 417.78 105.11 418.13 98.85L418.31 93.97 442.59 93.97 442.59 102.15C442.59 127.04 433.19 132.61 408.38 132.61 388.89 132.61 372.76 130.17 372.76 107.2L372.76 62.12 361.41 62.12 361.41 40.2 372.76 40.2 372.76 20.89 403.24 20.89 403.24 40.2 438.51 40.2 438.51 62.12Z" stroke-width="0" fill="currentColor"/><path d="M482.99 131.57 452.5 131.57 452.5 40.2 482.99 40.2 482.99 131.57ZM482.99 24.02 452.5 24.02 452.5 1.06 482.99 1.06 482.99 24.03Z" stroke-width="0" fill="currentColor"/><path d="M559.21 131.57 560.28 113.99 558.86 113.99C554.6 128.09 543.97 132.61 531.03 132.61 512.6 132.61 499.48 124.95 499.48 102.68L499.48 40.19 529.97 40.19 529.97 94.67C529.97 103.02 530.86 109.63 541.14 109.63 549.29 109.63 558.33 105.45 558.33 96.4L558.33 40.19 588.82 40.19 588.82 131.56 559.22 131.56Z" stroke-width="0" fill="currentColor"/><path d="M663.06 66.14C662.01 58.48 655.44 58.48 650.66 58.48 634.7 58.48 634.7 60.4 634.7 65.79 634.7 70.31 635.06 73.45 650.66 73.79 682.21 74.49 696.21 76.23 696.21 101.81 696.21 127.39 675.11 132.62 650.66 132.62 626.21 132.62 605.11 133.14 605.11 103.03L635.59 103.03C635.59 113.3 643.21 113.3 650.66 113.3 664.48 113.3 666.61 112.44 666.61 105.3 666.61 96.26 661.29 96.26 650.66 96.26 612.02 96.26 605.11 87.73 605.11 69.11 605.11 39.7 624.78 39.18 650.66 39.18 667.67 39.18 691.78 39.35 691.78 61.8L691.78 66.15 663.06 66.15Z" stroke-width="0" fill="currentColor"/><path d="M771.54 131.57 736.09 131.57 736.09 31.33 702.06 31.33 702.06 1.06 807.34 1.06 807.34 31.33 771.54 31.33 771.54 131.57Z" stroke-width="0" fill="currentColor"/><path d="M863.2 74.49C863.2 60.91 858.05 60.04 847.77 60.04 836.96 60.04 833.59 62.48 833.24 74.49L863.2 74.49ZM893.68 101.12C893.68 114.87 889.07 122.7 881.09 127.22 873.11 131.57 861.77 132.61 848.3 132.61 811.61 132.61 802.75 120.08 802.75 85.97 802.75 51.86 810.9 39.16 848.3 39.16 883.22 39.16 893.68 48.73 893.68 85.97L893.68 91.02 833.24 91.02C833.24 107.02 835.72 111.72 848.3 111.72 857.7 111.72 863.73 110.68 863.73 101.11L893.69 101.11Z" stroke-width="0" fill="currentColor"/><path d="M994.18 95.03C994.18 112.08 991.17 121.48 983.9 126.52 976.81 131.74 965.64 132.61 949.16 132.61 913.18 132.61 904.67 121.99 904.67 85.97 904.67 54.99 911.06 39.16 949.16 39.16 975.92 39.16 994.18 41.94 994.18 74.48L963.68 74.48C963.86 69.61 963.34 66.65 961.2 64.73 959.07 62.82 955.53 62.11 949.15 62.11 938.34 62.11 935.15 65.08 935.15 85.96 935.15 106.84 937.63 109.63 949.15 109.63 962.97 109.63 963.68 106.32 963.68 95.01L994.18 95.01Z" stroke-width="0" fill="currentColor"/><path d="M1038.49 57.26 1039.73 57.26C1044.16 42.82 1053.21 39.17 1067.56 39.17 1088.12 39.17 1097.52 48.74 1097.52 68.41L1097.52 131.58 1067.03 131.58 1067.03 75.36C1066.86 66.49 1064.37 62.13 1054.45 62.13 1040.81 62.13 1038.5 70.14 1038.5 81.28L1038.5 131.58 1008.01 131.58 1008.01 1.06 1038.5 1.06 1038.5 57.26Z" stroke-width="0" fill="currentColor"/></g><g><rect x="0" y="0.26" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="46.36" y="0.26" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="92.71" y="0.26" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="0" y="46.62" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="46.36" y="46.62" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="92.71" y="46.62" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="0" y="92.97" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="46.36" y="92.97" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/><rect x="92.71" y="92.97" width="39.4" height="39.4" stroke-width="0" fill="currentColor"/></g></symbol></svg>
+<div id="deck">
+
+<!-- 1. COVER -->
+<section class="slide cover active">
+  <div class="inner">
+    <div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div>
+    <div class="accent-bar"></div>
+    <h1>AI-DLC &amp; Agent Squad</h1>
+    <div class="sub">A governed, multi-agent way to run the AI Development Life Cycle &mdash;
+      from idea to reviewed pull request, with named agents you can trust and audit.</div>
+    <div class="meta">Leadership briefing &amp; technical quickstart &nbsp;&bull;&nbsp; agent-squad v0.7.0 &nbsp;&bull;&nbsp; Prepared for CitiusTech Engineering</div>
+  </div>
+</section>
+
+<!-- 2. AGENDA -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">Agenda</div></div>
+  <div class="body">
+    <h1>What we will cover</h1>
+    <div class="grid2">
+      <div class="grid3" style="grid-template-columns:1fr;gap:12px;">
+        <div class="card"><span class="tag">01</span><h3>What is AI-DLC?</h3><p class="muted" style="margin:0;font-size:14px;">The spec-first, agent-orchestrated lifecycle model.</p></div>
+        <div class="card"><span class="tag">02</span><h3>Phases of AI-DLC</h3><p class="muted" style="margin:0;font-size:14px;">The canonical six-state delivery pipeline.</p></div>
+        <div class="card"><span class="tag">03</span><h3>The AI-DLC plugin</h3><p class="muted" style="margin:0;font-size:14px;">board-manager: plan, board, sprints, hand-off.</p></div>
+      </div>
+      <div class="grid3" style="grid-template-columns:1fr;gap:12px;">
+        <div class="card"><span class="tag">04</span><h3>What is Agent Squad?</h3><p class="muted" style="margin:0;font-size:14px;">The behaviour contract for engineering agents.</p></div>
+        <div class="card"><span class="tag">05</span><h3>Together or independent + features</h3><p class="muted" style="margin:0;font-size:14px;">Two plugins, used as a pair or on their own.</p></div>
+        <div class="card"><span class="tag">06</span><h3>Quickstart + worked example</h3><p class="muted" style="margin:0;font-size:14px;">Get a team running on a real GitHub project.</p></div>
+      </div>
+    </div>
+    <blockquote><strong>Two plugins, two audiences, one deck.</strong> The AI-DLC plugin (<code>ai-dlc-board-manager</code>) drives the board;
+      Agent Squad drives the agents. Early slides are the management pitch; the later slides are a hands-on quickstart your engineers can follow the same afternoon.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 3. DIVIDER: AI-DLC -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SECTION 01</div>
+    <h1>What is AI-DLC?</h1>
+    <p>The AI Development Life Cycle &mdash; a repeatable, governed way to ship software when AI agents do most of the typing.</p>
+  </div>
+</section>
+
+<!-- 4. WHAT IS AI-DLC -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">01 &bull; What is AI-DLC?</div></div>
+  <div class="body">
+    <h1>AI-DLC: the SDLC, re-drawn for agents</h1>
+    <p class="lead">The AI Development Life Cycle keeps the discipline of the classic SDLC &mdash;
+      requirements, design, build, review, release &mdash; but assumes the <strong>work is done by AI agents</strong>
+      operating under human direction, not by a room full of engineers typing.</p>
+    <div class="grid2" style="margin-top:6px;">
+      <div class="card">
+        <h2 style="margin-bottom:10px;">The problem it solves</h2>
+        <ul style="margin:0;">
+          <li>Ungoverned AI coding is fast but <strong>unauditable</strong> &mdash; who decided what, and why?</li>
+          <li>One giant prompt cannot hold design, build and review without losing the thread.</li>
+          <li>Agents happily edit anything, anywhere &mdash; no lanes, no contracts, no self-review.</li>
+          <li>Output quality is invisible until a human reads every line.</li>
+        </ul>
+      </div>
+      <div class="card tint">
+        <h2 style="margin-bottom:10px;">What AI-DLC adds</h2>
+        <ul style="margin:0;">
+          <li><strong>Phased flow</strong> &mdash; intent &rarr; plan &rarr; design &rarr; build &rarr; review &rarr; release.</li>
+          <li><strong>Named roles</strong> with clear responsibility and file scope.</li>
+          <li><strong>Contracts first</strong> &mdash; the interface is agreed before code is written.</li>
+          <li><strong>Gates &amp; self-review</strong> at every hand-off, so quality is enforced, not hoped for.</li>
+        </ul>
+      </div>
+    </div>
+    <blockquote>AI-DLC is the <em>process</em>. <strong>Agent Squad</strong> is the <em>construct that makes agents follow it.</strong>
+      The board manager (<code>ai-dlc-board-manager</code>) is the project-management layer on top.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 5. PHASES OF AI-DLC -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">02 &bull; Phases of AI-DLC</div></div>
+  <div class="body">
+    <h1>The phases: one canonical delivery pipeline</h1>
+    <p class="lead">Every change flows through the same six states, with the <strong>board as the single source of truth</strong>.
+      Spec-first at the front, human gates at the back &mdash; so provenance runs unbroken from plan to merge.</p>
+    <div class="flow" style="gap:0;">
+      <div class="step"><div class="n">1</div><h3 style="font-size:13px;">Backlog</h3><small class="muted">Feature exists, not yet specified.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">2</div><h3 style="font-size:13px;">Spec Ready</h3><small class="muted">Brief + testable check written.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step" style="border-color:var(--brand);border-width:2px;"><div class="n">3</div><h3 style="font-size:13px;">Agent Work</h3><small class="muted">Agents build it (see below).</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">4</div><h3 style="font-size:13px;">PR Review</h3><small class="muted">Self-review + human gate.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">5</div><h3 style="font-size:13px;">Accepted</h3><small class="muted">Optional sign-off.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">6</div><h3 style="font-size:13px;">Done</h3><small class="muted">Merged &amp; closed.</small></div>
+    </div>
+    <div class="grid2" style="margin-top:16px;">
+      <div class="card brand">
+        <h3>Inside &ldquo;Agent Work&rdquo;: the Agent Squad staging</h3>
+        <p style="margin:0 0 8px;font-size:14px;">The board owns the outer pipeline. When a ticket enters <strong>Agent Work</strong>, Agent Squad runs its own guaranteed staging:</p>
+        <div style="font-size:14px;font-weight:700;">Design <span style="opacity:.7;">&rarr;</span> Build <span style="opacity:.7;">&rarr;</span> Review</div>
+        <p style="margin:8px 0 0;font-size:13px;">The design contract MUST be in <code style="background:rgba(255,255,255,.15);color:#fff;border:0;">main</code> before any build starts &mdash; the contract-first hard rule.</p>
+      </div>
+      <div class="card">
+        <h3>Human-in-the-loop by design</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li><strong>Spec-first:</strong> nothing is built without a brief and a testable check.</li>
+          <li><strong>Agent-orchestrated:</strong> agents do the work between the gates.</li>
+          <li><strong>Human-governed:</strong> a person moves Spec Ready and accepts / merges.</li>
+        </ul>
+        <p class="muted" style="font-size:12.5px;margin:8px 0 0;">Accepted is optional &mdash; teams can collapse it into Done. Lifecycle hooks (pre/post-implement, pre/post-pr) enforce quality at each seam.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- DIVIDER: THE AI-DLC PLUGIN -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SECTION 02</div>
+    <h1>The AI-DLC plugin (board-manager)</h1>
+    <p>The Product-Owner and Tech-Lead layer that drives your board through the pipeline &mdash; usable on its own.</p>
+  </div>
+</section>
+
+<!-- WHAT IS THE AI-DLC PLUGIN -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">03 &bull; The AI-DLC plugin</div></div>
+  <div class="body">
+    <h1>ai-dlc-board-manager: run delivery on the board you already have</h1>
+    <p class="lead">A Claude Code / Cowork plugin (<code>v0.6.0</code>) that gives an AI agent <strong>Product-Owner and Tech-Lead skills</strong>.
+      It <em>manages an existing board</em> &mdash; it does not build or host one. Board-manager owns the board; Agent Squad owns the coding agent.</p>
+    <div class="grid2" style="margin-top:6px;">
+      <div class="card">
+        <h2 style="margin-bottom:10px;">The problem it solves</h2>
+        <ul style="margin:0;">
+          <li>Turning specs into a plan, and a plan into board issues, is slow, manual and error-prone.</li>
+          <li>Sprint planning by hand ignores the real dependency graph between features.</li>
+          <li>Nobody can trace a shipped change back to the spec that asked for it.</li>
+        </ul>
+      </div>
+      <div class="card tint">
+        <h2 style="margin-bottom:10px;">Five guiding principles</h2>
+        <ul style="margin:0;">
+          <li><strong>Spec / plan-driven</strong> &mdash; specs come first, always.</li>
+          <li><strong>Multi-agent collaboration</strong> &mdash; specialist roles, not one bot.</li>
+          <li><strong>Board as universal interface</strong> &mdash; the single source of truth.</li>
+          <li><strong>Living provenance</strong> &mdash; plan &rarr; issue &rarr; branch/PR &rarr; review.</li>
+          <li><strong>Human-in-the-loop gates</strong> &mdash; people approve the transitions.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note" style="margin-top:12px;">&ldquo;AI-DLC&rdquo; here means <strong>AI-Driven Development Life Cycle</strong> &mdash; this team&rsquo;s own spec-first, agent-orchestrated, human-governed methodology. Board backend today is <strong>GitHub Projects v2</strong>; Jira, Azure DevOps and Linear are on the roadmap behind a provider contract.</div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- THE 5 SKILLS + SPEC-TO-BOARD FLOW -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">03 &bull; The AI-DLC plugin</div></div>
+  <div class="body">
+    <h1>Five skills: from spec to shipped, on the board</h1>
+    <div class="flow" style="margin-top:2px;">
+      <div class="step"><div class="n" style="font-size:11px;">1</div><h3 style="font-size:12.5px;">spec-to-plan</h3><small class="muted">Docs &rarr; a validated <code>ProjectPlan.md</code> draft.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n" style="font-size:11px;">2</div><h3 style="font-size:12.5px;">board-sync</h3><small class="muted">Plan &rarr; milestones + issues; reports drift.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n" style="font-size:11px;">3</div><h3 style="font-size:12.5px;">sprint-plan</h3><small class="muted">Dependency-aware sprint proposal.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n" style="font-size:11px;">4</div><h3 style="font-size:12.5px;">start-feature</h3><small class="muted">Branch + assign + move to Agent Work.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n" style="font-size:11px;">5</div><h3 style="font-size:12.5px;">finish-feature</h3><small class="muted">Delegates PR, moves to PR Review.</small></div>
+    </div>
+    <table style="margin-top:14px;">
+      <tr><th>Skill</th><th>Role</th><th>What it produces</th><th>Writes to board?</th></tr>
+      <tr><td><code>spec-to-plan</code></td><td>Spec Engineer</td><td>A <code>ProjectPlan.md</code> draft you review (never fabricates scope)</td><td>No &mdash; plan file only</td></tr>
+      <tr><td><code>board-sync</code></td><td>Product Owner</td><td>Creates missing milestones / issues; categorised drift report</td><td>Yes &mdash; creates, never deletes</td></tr>
+      <tr><td><code>sprint-plan</code></td><td>Product Owner</td><td>Ordered, dependency-aware sprint proposal</td><td>Read-only by default</td></tr>
+      <tr><td><code>start-feature</code></td><td>Tech Lead (PM)</td><td>Feature branch, assignment, move to Agent Work, then stops</td><td>Yes &mdash; assign + move</td></tr>
+      <tr><td><code>finish-feature</code></td><td>Tech Lead</td><td>Delegates PR to Agent Squad, moves to PR Review</td><td>Yes &mdash; move only</td></tr>
+    </table>
+    <p class="muted" style="font-size:12.5px;margin-top:6px;">Invoked in plain language (&ldquo;sync the board&rdquo;, &ldquo;plan sprint for M2&rdquo;). Everything is idempotent and gated &mdash; it proposes, a human confirms. <code>plan-lint</code> validates the plan (IDs, statuses, and circular-dependency detection) before any sync.</p>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- TOGETHER OR INDEPENDENT -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Together or independent</div></div>
+  <div class="body">
+    <h1>Two plugins: use them together, or on their own</h1>
+    <p class="lead">They are a designed pair with a clean ownership split &mdash; but neither forces the other on you.</p>
+    <div class="grid3">
+      <div class="card tint">
+        <span class="pill">AI-DLC PLUGIN ALONE</span>
+        <h3 style="margin-top:8px;">Pure PM / board tool</h3>
+        <p style="font-size:13.5px;">Run <code>spec-to-plan</code>, <code>board-sync</code>, <code>sprint-plan</code>, <code>start-feature</code> to drive a GitHub board from specs. No coding agent required.</p>
+        <p style="font-size:12.5px;margin:0;" class="muted">Only <code>finish-feature</code> needs Agent Squad &mdash; it politely refuses without it.</p>
+      </div>
+      <div class="card brand">
+        <span class="pill" style="background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.4);">BOTH TOGETHER</span>
+        <h3 style="margin-top:8px;">Full AI-DLC loop</h3>
+        <p style="font-size:13.5px;">Board-manager plans and moves tickets; Agent Squad designs, builds and reviews inside Agent Work. Provenance runs end-to-end: spec &rarr; issue &rarr; PR &rarr; merge.</p>
+        <p style="font-size:12.5px;margin:0;opacity:.9;">The hand-off: start-feature &rarr; <code style="background:rgba(255,255,255,.15);color:#fff;border:0;">/agent-squad:implement</code> &rarr; finish-feature.</p>
+      </div>
+      <div class="card tint">
+        <span class="pill v">AGENT SQUAD ALONE</span>
+        <h3 style="margin-top:8px;">Governed coding, no board</h3>
+        <p style="font-size:13.5px;">Run <code>orchestrate</code> / <code>implement</code> / <code>finish-feature</code> straight off a GitHub issue or a brief. Personas, lanes, self-review and token tracking all work with no board at all.</p>
+        <p style="font-size:12.5px;margin:0;" class="muted">Board mirroring simply stays off.</p>
+      </div>
+    </div>
+    <blockquote style="margin-top:16px;"><strong>Ownership, in one line:</strong> board-manager owns the board and the plan; Agent Squad owns the agents and the code.
+      Wire them with a single <code>.ai-dlc.yml</code> when you want the full loop &mdash; or adopt just the half you need today and add the other later.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- COMPARISON: AWS AI-DLC vs BOARD MANAGER -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">03 &bull; Comparison</div></div>
+  <div class="body">
+    <h1>How this compares to AWS&rsquo;s AI-DLC</h1>
+    <p class="lead">Both expand to <strong>AI-Driven Development Life Cycle</strong> and share a spec-first, human-gated philosophy &mdash;
+      but they solve different halves of the problem.</p>
+    <table style="font-size:12.5px;">
+      <tr>
+        <th style="width:20%;">Dimension</th>
+        <th style="width:40%;">AWS AI-DLC <span style="font-weight:400;text-transform:none;opacity:.85;">(awslabs/aidlc-workflows)</span></th>
+        <th style="width:40%;">AI-DLC plugin <span style="font-weight:400;text-transform:none;opacity:.85;">(this team&rsquo;s board-manager)</span></th>
+      </tr>
+      <tr><td><strong>What it is</strong></td><td>A methodology + agent-steering <em>rule set</em> &mdash; &ldquo;a methodology, not a tool&rdquo;.</td><td>A Claude Code / Cowork <em>plugin</em> that drives a real project board.</td></tr>
+      <tr><td><strong>Primary focus</strong></td><td>Intent &rarr; requirements &rarr; design &rarr; code, reasoned out inside the repo.</td><td>Plan &rarr; board &rarr; sprint &rarr; hand-off, with provenance on the board.</td></tr>
+      <tr><td><strong>Lifecycle model</strong></td><td>Three phases: <strong>Inception / Construction / Operations</strong>, via &ldquo;Mob&rdquo; elaboration.</td><td>Six-state pipeline: Backlog &rarr; Spec Ready &rarr; Agent Work &rarr; PR Review &rarr; Accepted &rarr; Done.</td></tr>
+      <tr><td><strong>Where work lives</strong></td><td>Markdown artifacts in <code>aidlc-docs/</code> in the repo.</td><td>The project board (GitHub Projects v2) + <code>ProjectPlan.md</code>.</td></tr>
+      <tr><td><strong>Project management</strong></td><td>None &mdash; no board, issues, milestones or sprints.</td><td>Core purpose &mdash; milestones, issues, drift, dependency-aware sprints.</td></tr>
+      <tr><td><strong>Agent support</strong></td><td>Agent-agnostic: Kiro, Amazon Q, Cursor, Cline, Claude Code, Copilot, Codex.</td><td>Claude Code / Cowork; pairs with <strong>Agent Squad</strong> for the coding half.</td></tr>
+      <tr><td><strong>Distribution</strong></td><td>Download a release zip of steering rules; prompt &ldquo;Using AI-DLC, &hellip;&rdquo;.</td><td>Installed plugin; invoked in plain language (&ldquo;sync the board&rdquo;).</td></tr>
+    </table>
+    <blockquote style="margin-top:12px;"><strong>Complementary, not competing.</strong> AWS AI-DLC shapes <em>how one agent reasons</em> from intent to code;
+      our AI-DLC plugin orchestrates <em>the board and the team</em> and hands coding to Agent Squad. You could even run AWS AI-DLC&rsquo;s rules
+      <em>inside</em> the &ldquo;Agent Work&rdquo; phase &mdash; the board still owns the outer pipeline.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 6. DIVIDER: AGENT SQUAD -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SECTION 03</div>
+    <h1>What is Agent Squad?</h1>
+    <p>The behaviour contract that turns raw AI coding into a governed engineering team.</p>
+  </div>
+</section>
+
+<!-- 7. WHAT IS AGENT SQUAD -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">03 &bull; What is Agent Squad?</div></div>
+  <div class="body">
+    <h1>Agent Squad is a behaviour contract, not a bot</h1>
+    <p class="lead">An organisation-wide <strong>construct</strong> that defines <em>how</em> AI engineering agents behave:
+      three personas, a role-composition schema, a self-review format, and the lifecycle / tool hooks that enforce them.
+      It ships as a Claude Code plugin (<code>v0.7.0</code>).</p>
+    <div class="grid3" style="margin-top:8px;">
+      <div class="card"><div class="ic">A</div><h3>Deliberately narrow</h3><p style="margin:0;font-size:14px;">It knows nothing about your board, your language, or your domain. That keeps it reusable across every project.</p></div>
+      <div class="card"><div class="ic">B</div><h3>Layered, not monolithic</h3><p style="margin:0;font-size:14px;">Behaviour, knowledge and file scope are separate layers &mdash; you compose them into project-specific roles.</p></div>
+      <div class="card"><div class="ic">C</div><h3>Enforced, not advisory</h3><p style="margin:0;font-size:14px;">Governance rules run as hooks. An agent that strays out of lane or skips self-review is blocked, not trusted.</p></div>
+    </div>
+    <div class="formula" style="margin-top:18px;">
+      <span class="a">Persona</span> <span class="muted" style="font-weight:400;">(behaviour)</span>
+      &nbsp;+&nbsp; <span class="b">Skills</span> <span class="muted" style="font-weight:400;">(knowledge)</span>
+      &nbsp;+&nbsp; <span class="c">Lanes</span> <span class="muted" style="font-weight:400;">(file scope)</span>
+      &nbsp;=&nbsp; <strong>Role</strong>
+    </div>
+    <p class="muted" style="text-align:center;font-size:13px;margin-top:8px;">
+      Example role: <code>backend-dev</code> = implementer + [python, fastapi, postgres] + writes only in <code>app/api/</code>, <code>tests/</code></p>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 8. THE THREE-LAYER MODEL -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">03 &bull; The three-layer model</div></div>
+  <div class="body">
+    <h1>Persona + Skills + Lanes = Role</h1>
+    <div class="grid3">
+      <div class="card tint">
+        <span class="pill">LAYER 1</span>
+        <h3 style="margin-top:8px;">Persona &mdash; behaviour</h3>
+        <p style="font-size:14px;">Fixed set of three (Lead, Architect, Implementer). Ships with the construct. Defines <em>how</em> an agent works &mdash; what it may and may not do.</p>
+      </div>
+      <div class="card tint">
+        <span class="pill a">LAYER 2</span>
+        <h3 style="margin-top:8px;">Skills &mdash; knowledge</h3>
+        <p style="font-size:14px;">Pluggable <code>SKILL.md</code> files (aws, docker, fastapi, postgres, python, react, terraform, typescript, github-actions). Defines <em>what</em> an agent knows.</p>
+      </div>
+      <div class="card tint">
+        <span class="pill v">LAYER 3</span>
+        <h3 style="margin-top:8px;">Lanes &mdash; file scope</h3>
+        <p style="font-size:14px;">Read / write glob patterns declared per role in your project. Defines <em>where</em> an agent may touch &mdash; enforced by a branch guard.</p>
+      </div>
+    </div>
+    <blockquote style="margin-top:18px;">
+      <strong>Why separate them?</strong> Behaviour belongs in personas, knowledge in skills, file scope in your project&rsquo;s <code>AGENTS.md</code>.
+      Mixing layers is the single most common way teams break the construct. Keep them apart and a role becomes a
+      reusable Lego brick: <em>the same person can play different roles on different work &mdash; the role is a function of the work, not the person.</em>
+    </blockquote>
+    <div class="note" style="margin-top:6px;">Roles are declared once in a project&rsquo;s <code>AGENTS.md</code> and validated by a schema. A role with no lane simply cannot start &mdash; the construct refuses.</div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 9. THE THREE PERSONAS -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Feature: Personas</div></div>
+  <div class="body">
+    <h1>Three personas, three jobs</h1>
+    <div class="grid3">
+      <div class="card">
+        <div class="persona-hd"><div class="avatar" style="background:var(--brand-dark);">L</div><div><h3 style="margin:0;">Lead</h3><span class="tag">orchestrator &bull; opus</span></div></div>
+        <p style="font-size:13.5px;">Reads the ticket, decides if design is needed, writes briefs, dispatches tasks, gates every PR, owns ADRs and governance.</p>
+        <p style="font-size:12.5px;margin:0;"><strong>Writes no app code.</strong> Lane: <code>docs/adr/</code>, <code>AGENTS.md</code>, <code>.ai-dlc.yml</code>, issues. Cannot approve its own PRs.</p>
+      </div>
+      <div class="card">
+        <div class="persona-hd"><div class="avatar" style="background:var(--deep);">A</div><div><h3 style="margin:0;">Architect</h3><span class="tag">design &bull; opus</span></div></div>
+        <p style="font-size:13.5px;">Authors contracts, ADRs and diagrams; refines with the Lead until sign-off. Always runs in plan mode, before any Implementer.</p>
+        <p style="font-size:12.5px;margin:0;"><strong>Never implements what it designed.</strong> The contract file must land in <code>main</code> before build starts.</p>
+      </div>
+      <div class="card">
+        <div class="persona-hd"><div class="avatar" style="background:var(--brand);">I</div><div><h3 style="margin:0;">Implementer</h3><span class="tag">build &bull; sonnet</span></div></div>
+        <p style="font-size:13.5px;">Reads the brief, works strictly in its lane, contract-first, writes code + tests, ships the PR via finish-feature.</p>
+        <p style="font-size:12.5px;margin:0;"><strong>No &ldquo;while I&rsquo;m here&rdquo; refactors.</strong> Never edits the Architect&rsquo;s contract &mdash; it halts and flags instead.</p>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:16px;">
+      <div class="card tint">
+        <h3>Aliases make agents feel like teammates</h3>
+        <p style="margin:0;font-size:14px;">A role can carry a cosmetic <strong>alias</strong> (e.g. &ldquo;Pradhan&rdquo; for the Lead). It is purely for readability in the hand-off narration &mdash; it does not change routing. You get output like:
+          <br><code>Pradhan (lead): taking #12 through intake</code></p>
+      </div>
+      <div class="card tint">
+        <h3>Model per persona &mdash; cost-aware by design</h3>
+        <p style="margin:0;font-size:14px;">Lead and Architect default to <strong>Opus</strong> (judgement-heavy). Implementers default to <strong>Sonnet</strong> (throughput). You can override per role. Expensive thinking is spent where it matters.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 10. HOW AGENT SQUAD WORKS WITH AI-DLC -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">04 &bull; Agent Squad &times; AI-DLC</div></div>
+  <div class="body">
+    <h1>How the pieces fit together</h1>
+    <div class="col-2-3">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>1. Board manager &mdash; the PM layer</h3>
+          <p style="margin:0;font-size:14px;"><code>ai-dlc-board-manager</code> turns specs into a plan, syncs GitHub issues, plans sprints, and moves tickets between columns. It knows about boards; the construct does not.</p>
+        </div>
+        <div class="card brand" style="margin-bottom:12px;">
+          <h3>2. Agent Squad &mdash; the behaviour layer</h3>
+          <p style="margin:0;font-size:14px;">Personas, role schema, self-review format, lifecycle &amp; tool hooks, and orchestration. This is what makes each agent follow the AI-DLC phases and stay in lane.</p>
+        </div>
+        <div class="card">
+          <h3>3. Your project &mdash; the composition</h3>
+          <p style="margin:0;font-size:14px;">Your repo&rsquo;s <code>AGENTS.md</code> composes roles from personas + skills + lanes. <code>.ai-dlc.yml</code> wires hooks and the board. One file each, checked in.</p>
+        </div>
+      </div>
+      <div class="card tint">
+        <h3>The wire between them</h3>
+        <p style="font-size:13.5px;">A single <code>.ai-dlc.yml</code> at the repo root connects everything:</p>
+        <pre><code><span class="tok-m"># .ai-dlc.yml</span>
+<span class="tok-c">plan_file</span>: ProjectPlan.md
+<span class="tok-c">github_repo</span>: your-org/your-repo
+<span class="tok-c">hooks</span>:
+  <span class="tok-c">usage_tracker</span>: enabled</code></pre>
+        <p style="font-size:13px;margin:8px 0 0;" class="muted">When wired, orchestration mirrors each dispatch onto the board. The construct&rsquo;s own squad board renders regardless &mdash; you are never blind.</p>
+      </div>
+    </div>
+    <blockquote style="margin-top:14px;"><strong>The guarantee:</strong> orchestration changes <em>where</em> the AI-DLC stages run (one session vs. many worktrees),
+      never <em>what</em> they guarantee. Design still precedes build; contracts still merge first; every PR still carries a self-review.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 11. DIVIDER: FEATURES -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SECTION 04</div>
+    <h1>Agent Squad features that make it real</h1>
+    <p>Orchestration &bull; Token estimation &bull; init &bull; Self-review &amp; governance</p>
+  </div>
+</section>
+
+<!-- 12. ORCHESTRATION -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Feature: Orchestration</div></div>
+  <div class="body">
+    <h1>Orchestration: one Lead, a whole squad</h1>
+    <p class="lead"><code>/agent-squad:orchestrate 42</code> &mdash; one session becomes the entire team. The Lead reads the ticket, decomposes it, and <strong>visibly hands each task to a named specialist agent</strong>, gating every return.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>What you see on screen</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li><strong>Ticket Intake block</strong> &mdash; issue, lead, whether design is needed, task list, mode.</li>
+          <li><strong>Squad Board</strong> &mdash; a live table (Wave / Task / Agent / Lane / Branch / Status), re-rendered on every change.</li>
+          <li><strong>Hand-off block</strong> before each agent spawns; <strong>Return block</strong> when it finishes or halts.</li>
+        </ul>
+      </div>
+      <div class="card tint">
+        <h3>Sequential or parallel &mdash; decided automatically</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li><strong>Sequential:</strong> one branch, one PR, agents run one at a time.</li>
+          <li><strong>Parallel:</strong> tasks with non-overlapping lanes run in isolated <code>git worktrees</code>, each with its own branch and PR.</li>
+          <li>Classic shape: DB schema (wave 1) &rarr; backend + frontend in parallel (wave 2) &rarr; infra (wave 3).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <h3>v0.7.0: synchronous dispatch + lost-agent recovery <span class="pill a" style="margin-left:6px;">hardened in the field</span></h3>
+      <div class="grid2" style="margin-top:6px;">
+        <p style="margin:0;font-size:13.5px;"><strong>Synchronous by default.</strong> Every agent is spawned and awaited &mdash; the Lead never parks work on a detached run it cannot hear back from. &ldquo;Changes requested&rdquo; spawns a fresh round-2 agent rather than resuming a finished one.</p>
+        <p style="margin:0;font-size:13.5px;"><strong>Never stalls.</strong> If a spawn ends with no return, the task is marked halted; the Lead inspects the working tree, salvages committed work, and re-dispatches the rest. A turn never ends silently mid-flight.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 13. TOKEN ESTIMATION -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Feature: Token estimation</div></div>
+  <div class="body">
+    <h1>Token estimation: budget, then measure</h1>
+    <p class="lead">Every brief carries a coarse <strong>size estimate</strong>; every session records <strong>actual token usage</strong>.
+      The gap between them is a calibration loop, not a promise &mdash; so estimates get better over time.</p>
+    <div class="col-2-3">
+      <div class="card">
+        <h3>The estimate (Lead&rsquo;s guess, in the brief)</h3>
+        <table style="margin:6px 0;">
+          <tr><th>Size</th><th>Rough total tokens (whole feature)</th></tr>
+          <tr><td><span class="pill">S</span></td><td>under ~50k</td></tr>
+          <tr><td><span class="pill">M</span></td><td>~50k &ndash; 150k</td></tr>
+          <tr><td><span class="pill">L</span></td><td>~150k &ndash; 400k</td></tr>
+          <tr><td><span class="pill">XL</span></td><td>over ~400k</td></tr>
+        </table>
+        <p class="muted" style="font-size:12.5px;margin:0;">Set as <code>estimate: S|M|L|XL</code> in the brief frontmatter; copied into the session marker at pre-implement.</p>
+      </div>
+      <div class="card tint">
+        <h3>The actuals (measured, automatically)</h3>
+        <p style="font-size:13.5px;">A <strong>Stop hook</strong> reads the session transcript and sums input, output and cache tokens into <code>.agent-squad/usage.json</code> &mdash; per issue, per session, never double-counted.</p>
+        <p style="font-size:13.5px;margin:0;">At PR time it surfaces on the pull request:</p>
+        <pre style="margin-top:8px;"><code><span class="tok-c">### Token usage</span>
+Estimate: M (~50-150k).
+Actual: input=82k output=14k
+        cache_read=1.2M</code></pre>
+      </div>
+    </div>
+    <blockquote style="margin-top:12px;"><strong>Why management cares:</strong> AI coding has a real, variable cost. This turns it into a
+      <em>forecast-and-track</em> line item &mdash; you can size features before you start and see the true cost on every PR.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 14. INIT -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Feature: init</div></div>
+  <div class="body">
+    <h1>init: adopt the construct in minutes</h1>
+    <p class="lead"><code>/agent-squad:init</code> scans a project and generates a draft role composition &mdash; so teams onboard without hand-writing schema.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>What it scans (read-only)</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li>Plan &amp; spec docs: <code>ProjectPlan.md</code>, <code>README.md</code>, <code>specs/</code>, <code>docs/</code>.</li>
+          <li>Tech manifests to detect the stack: <code>package.json</code> (React / Next / TypeScript), <code>pyproject.toml</code> / <code>requirements.txt</code> (Python, FastAPI), Postgres deps, <code>Dockerfile</code>, <code>*.tf</code>, GitHub Actions.</li>
+          <li>Directory shape: <code>frontend/</code>, <code>src/components/</code> &rarr; a frontend lane.</li>
+        </ul>
+      </div>
+      <div class="card tint">
+        <h3>What it generates (a draft to review)</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li><strong><code>AGENTS.md</code></strong> &mdash; roles composed from the detected stack: always a Lead, one Implementer per lane, an Architect only if there is a real design surface. Never invents skills that don&rsquo;t exist.</li>
+          <li><strong><code>.ai-dlc.yml</code></strong> &mdash; the hooks + board wiring file, only if absent.</li>
+          <li>Optionally, a status-line entry so you always see the active persona.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note" style="margin-top:14px;">It never overwrites an existing <code>AGENTS.md</code> (it writes <code>AGENTS.md.draft</code> instead) and it does not create plan documents &mdash; that stays with the board manager. The output is a starting point a human signs off, then validates with <code>validate-role-schema</code>.</div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 15. GOVERNANCE + SELF REVIEW -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Feature: Governance</div></div>
+  <div class="body">
+    <h1>Self-review &amp; governance: quality you can audit</h1>
+    <div class="grid2">
+      <div class="card">
+        <h3>Every PR carries a self-review block</h3>
+        <p style="font-size:13.5px;">Validated by the <code>pre-pr</code> hook &mdash; placeholder text is rejected. For an Implementer it must include:</p>
+        <ul style="margin:0;font-size:13px;">
+          <li>What I actively checked (&ge;3 items)</li>
+          <li>Testable-check verification (command + output + result)</li>
+          <li>How to test, files changed, tests written</li>
+          <li>Issues I found and chose not to fix</li>
+        </ul>
+        <p class="muted" style="font-size:12.5px;margin:8px 0 0;">It forces the author to re-read its own diff &mdash; it is a trace, not a rubber stamp.</p>
+      </div>
+      <div class="card tint">
+        <h3>22 non-negotiable governance rules</h3>
+        <ul style="margin:0;font-size:13px;">
+          <li><span class="chk">&#10003;</span> No commits to <code>main</code>; rebase, don&rsquo;t merge; one feature, one branch.</li>
+          <li><span class="chk">&#10003;</span> Stay in your write lane; never overwrite another agent&rsquo;s files.</li>
+          <li><span class="chk">&#10003;</span> Contract-first: API / schema goes in before implementation.</li>
+          <li><span class="chk">&#10003;</span> Every PR has a substantive self-review; never approve your own.</li>
+          <li><span class="chk">&#10003;</span> No secrets in the repo; no PII in test fixtures.</li>
+        </ul>
+        <p class="muted" style="font-size:12.5px;margin:8px 0 0;">Rules map to enforcing hooks: branch-guard, rebase-guard, pre-implement, pre-pr. Breaking one blocks the action.</p>
+      </div>
+    </div>
+    <blockquote style="margin-top:14px;"><strong>The net effect:</strong> the same guardrails a senior reviewer would insist on &mdash; lane discipline, contracts, tests, written review &mdash;
+      are applied to <em>every</em> agent, on <em>every</em> change, automatically.</blockquote>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 16. FEATURES AT A GLANCE -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">05 &bull; Features at a glance</div></div>
+  <div class="body">
+    <h1>The full feature set</h1>
+    <div class="grid4">
+      <div class="card"><div class="ic">&#9724;</div><h3>3 personas</h3><small>Lead, Architect, Implementer &mdash; behaviour contracts with prohibited actions.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Role schema</h3><small>Compose persona + skills + lanes; validated, checked-in <code>AGENTS.md</code>.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Orchestration</h3><small>Single-session squad dispatch; sequential or parallel via worktrees.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Token estimation</h3><small>Size estimate vs. measured actuals, surfaced on the PR.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>init</h3><small>Auto-scan a repo, draft the role composition and wiring.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Self-review</h3><small>Mandatory per-persona review block, schema-validated.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Lifecycle hooks</h3><small>pre/post-implement, pre/post-pr &mdash; quality gates at each seam.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Lane guards</h3><small>branch-guard + rebase-guard keep agents in scope and rebased.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>9 domain skills</h3><small>aws, docker, fastapi, github-actions, postgres, python, react, terraform, typescript.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Live squad board</h3><small>Handoff / return blocks + status table you can watch.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Bot identity</h3><small>Optional PR-author token so you can review agent PRs cleanly.</small></div>
+      <div class="card"><div class="ic">&#9724;</div><h3>Board mirroring</h3><small>Wires to <code>ai-dlc-board-manager</code> for issue movement.</small></div>
+    </div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 17. DIVIDER: QUICKSTART -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SECTION 05</div>
+    <h1>Quickstart &amp; worked example</h1>
+    <p>Take a real open-source project from GitHub and run a feature through AI-DLC + Agent Squad.</p>
+  </div>
+</section>
+
+<!-- 18. WORKED EXAMPLE -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">06 &bull; Worked example</div></div>
+  <div class="body">
+    <h1>Example: adding a feature to an open-source FHIR service</h1>
+    <p class="lead">Scenario: you fork an open-source healthcare API (say a FHIR validator / query service on GitHub) and need to add a
+      <strong>&ldquo;bulk validate&rdquo; endpoint</strong> &mdash; a new API, a DB table, and a small React panel. Perfect for a squad.</p>
+    <div class="flow" style="margin-top:6px;">
+      <div class="step"><div class="n">1</div><h3 style="font-size:13px;">Lead intake</h3><small class="muted">Reads issue #42. Design needed &rarr; yes.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">2</div><h3 style="font-size:13px;">Architect</h3><small class="muted">Writes the API + schema contract. Merges to main.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">3</div><h3 style="font-size:13px;">Wave: parallel</h3><small class="muted">backend-dev + frontend-dev in separate worktrees.</small></div>
+      <div class="arw">&rarr;</div>
+      <div class="step"><div class="n">4</div><h3 style="font-size:13px;">Review + merge</h3><small class="muted">Self-review, Lead gate, merge in order.</small></div>
+    </div>
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card">
+        <h3>The whole thing, one command</h3>
+        <pre><code><span class="tok-m"># clone the OSS repo, then from its root:</span>
+/agent-squad:init            <span class="tok-m"># draft AGENTS.md + .ai-dlc.yml</span>
+/agent-squad:orchestrate 42  <span class="tok-m"># Lead runs the squad</span></code></pre>
+        <p style="font-size:13px;margin:0;" class="muted">The Lead decomposes #42, spawns the Architect, waits for the contract to merge, then fans out backend + frontend in parallel worktrees &mdash; all in one visible session.</p>
+      </div>
+      <div class="card tint">
+        <h3>What lands at the end</h3>
+        <ul style="margin:0;font-size:13.5px;">
+          <li>An Architect PR with the contract + ADR (merged first).</li>
+          <li>A backend PR (<code>app/api/</code>, <code>tests/</code>) and a frontend PR (<code>src/components/</code>) &mdash; each in lane.</li>
+          <li>Each PR carries a self-review block and a token-usage line.</li>
+          <li>Issue #42 moved to <em>PR Review</em> on the board.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted" style="font-size:12.5px;margin-top:8px;">Any public GitHub repo with a clear stack works &mdash; e.g. a FastAPI + Postgres + React service. <code>init</code> reads the manifests and drafts sensible lanes automatically.</p>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 19. QUICKSTART COMMANDS -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">06 &bull; Technical quickstart</div></div>
+  <div class="body">
+    <h1>Quickstart: zero to first feature</h1>
+    <div class="col-2-3">
+      <div>
+        <pre><code><span class="tok-m"># 1. Install deps in the construct (once)</span>
+cd /path/to/agent-squad
+npm install
+
+<span class="tok-m"># 2. Install as a Claude Code plugin, in your repo</span>
+claude plugin install agent-squad
+
+<span class="tok-m"># 3. Draft your role mapping from the project root</span>
+/agent-squad:init
+<span class="tok-m">#   fallback: copy examples/AGENTS.md.example -> AGENTS.md</span>
+
+<span class="tok-m"># 4. (recommended) bot identity so you can review agent PRs</span>
+<span class="tok-m"># PowerShell:</span>
+[Environment]::SetEnvironmentVariable(<span class="tok-a">'AGENT_SQUAD_GH_TOKEN'</span>,<span class="tok-a">'&lt;token&gt;'</span>,<span class="tok-a">'User'</span>)
+
+<span class="tok-m"># 5a. Single-session flow (simplest)</span>
+/agent-squad:orchestrate 42
+
+<span class="tok-m"># 5b. Or per-lane flow (manual control)</span>
+/ai-dlc-board-manager:start-feature 42
+/agent-squad:implement 42-backend
+/agent-squad:implement 43-frontend
+/agent-squad:finish-feature</code></pre>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Verify the construct itself</h3>
+          <pre style="margin:6px 0 0;"><code>node tests/ci-dry-run.js
+npm test
+npm run validate:role-schema</code></pre>
+        </div>
+        <div class="card tint" style="margin-bottom:12px;">
+          <h3>Know who is active</h3>
+          <p style="font-size:13px;margin:0;">A status-line command renders the live persona:</p>
+          <pre style="margin:6px 0 0;"><code><span class="tok-m"># e.g.</span>
+[agent-squad] implementer:
+backend-dev #42 (sonnet)</code></pre>
+        </div>
+        <div class="note" style="font-size:12.5px;">Prereqs: Node &ge; 18, a Claude Code host, and a git repo. The only runtime dependency is <code>js-yaml</code>.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 20. VIDEO -->
+<section class="slide">
+  <div class="top"><div class="wm"><svg class="ctlogo" viewBox="0 0 1097.51 132.62" role="img" aria-label="CitiusTech"><use href="#ct-logo"/></svg></div><div class="kick">Turning this into a video</div></div>
+  <div class="body">
+    <h1>Yes &mdash; you can make a video of this</h1>
+    <p class="lead">This deck is built to record. Three routes, from fastest to most polished:</p>
+    <div class="grid3">
+      <div class="card">
+        <span class="pill">FASTEST &bull; ~15 min</span>
+        <h3 style="margin-top:8px;">Screen-record the deck</h3>
+        <p style="font-size:13.5px;">Open this HTML full-screen, then capture with <strong>PowerPoint (Record)</strong>, <strong>Loom</strong>, <strong>OBS Studio</strong>, or Windows <strong>Xbox Game Bar</strong> (<code>Win+G</code>). Arrow keys advance slides. Talk over it, export MP4.</p>
+      </div>
+      <div class="card tint">
+        <span class="pill a">POLISHED &bull; ~1 hr</span>
+        <h3 style="margin-top:8px;">Narrated slides</h3>
+        <p style="font-size:13.5px;">Export this deck to PDF (Print &rarr; Save as PDF &mdash; it is print-styled, one slide per page), import to PowerPoint, and use <strong>Insert Audio / Record Slideshow</strong> &rarr; <strong>Export to MP4</strong>. I can write a per-slide narration script for you.</p>
+      </div>
+      <div class="card">
+        <span class="pill v">AI-GENERATED</span>
+        <h3 style="margin-top:8px;">AI avatar / voiceover</h3>
+        <p style="font-size:13.5px;">Feed the narration script into <strong>Synthesia</strong>, <strong>HeyGen</strong>, or <strong>ElevenLabs</strong> (voice) for an auto-narrated presenter video. Good for a repeatable, hands-off explainer.</p>
+      </div>
+    </div>
+    <blockquote style="margin-top:16px;"><strong>What I can do right now:</strong> write a tight <em>speaker-notes / narration script</em> (roughly 30&ndash;45 seconds per slide),
+      and, if useful, an <code>arckit:presentation</code>-style MARP or PowerPoint (<code>.pptx</code>) version you can record directly. Just say the word.</blockquote>
+    <p class="muted" style="font-size:12.5px;">Note: I can generate the deck, the script and the <code>.pptx</code> here, but the actual screen/audio recording happens on your machine &mdash; this environment cannot capture video itself.</p>
+  </div>
+  <div class="foot"><span class="conf">CitiusTech &bull; Internal</span><span>AI-DLC &amp; Agent Squad</span></div>
+</section>
+
+<!-- 21. CLOSING -->
+<section class="slide divider">
+  <div class="inner">
+    <div class="num">SUMMARY</div>
+    <h1>Governed AI engineering, out of the box</h1>
+    <p style="max-width:820px;">AI-DLC gives you the phases. Agent Squad makes agents follow them &mdash; three personas,
+      composable roles, orchestration, token budgets, and enforced self-review. Start with <code style="background:rgba(255,255,255,.15);color:#fff;border:0;">/agent-squad:init</code> on any repo today.</p>
+    <div style="margin-top:22px;font-size:14px;color:#D9D6FF;">
+      Next steps &nbsp;&bull;&nbsp; run <strong>init</strong> on a pilot repo &nbsp;&bull;&nbsp; orchestrate one real ticket &nbsp;&bull;&nbsp; review the token + self-review output with the team
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous">&#8249;</button>
+  <span class="count" id="count">1 / 21</span>
+  <button id="next" aria-label="Next">&#8250;</button>
+</div>
+
+<script>
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var countEl = document.getElementById('count');
+  var progEl = document.getElementById('prog');
+  function show(n){
+    i = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach(function(s,k){ s.classList.toggle('active', k===i); });
+    countEl.textContent = (i+1) + ' / ' + slides.length;
+    progEl.style.width = ((i+1)/slides.length*100) + '%';
+    var body = slides[i].querySelector('.body'); if(body){ body.scrollTop = 0; }
+  }
+  document.getElementById('next').onclick = function(){ show(i+1); };
+  document.getElementById('prev').onclick = function(){ show(i-1); };
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); show(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(i-1); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(slides.length-1); }
+  });
+  show(0);
+</script>
+</body>
+</html>
